@@ -6,9 +6,37 @@ import copy
 import tqdm
 import math
 from PIL import Image
+import matplotlib.pyplot as plt
 
-def get_bit(val,shift):
-    return (val >> shift) & 1
+FIXED_WIDTH     = 16
+FIXED_INT_SIZE  = 4
+
+def hamming_distance(x1,x2):
+    dist = x1 ^ x2
+    return bin(dist).count('1')
+
+def plot_image(filepath):
+    # get image from filepath
+    im = Image.open(filepath)
+    # save as numpy array
+    im = np.array(im,dtype=np.float32)
+
+    print()
+
+    im_folded = []
+
+    for row in range(im.shape[0]):
+        for col in range(im.shape[1]):
+            for channel in range(im.shape[2]):
+                im_folded.append(int(im[row,col,channel]))
+    #print(im_folded)
+    #plt.plot(im_folded[:500])
+
+    im_sa = [hamming_distance(im_folded[i],im_folded[i-1]) for i in range(1,len(im_folded))]
+
+    plt.plot(im_sa)
+
+    plt.show()
 
 def entropy(p_arr,bits):
     h = 0
@@ -19,6 +47,25 @@ def entropy(p_arr,bits):
             h -= p*math.log(p,2) + (1-p)*math.log(1-p,2)
     return h
 
+# get the switching activity for a layer
+def get_sa_layer(layer,bit):
+    size = 0
+    bit_val_prev = 0
+    sa = 0
+    # iterate: channels,width,rows
+    if len(layer.shape) == 4:
+        size = layer.shape[1]*layer.shape[2]*layer.shape[3]
+        for row in range(layer.shape[3]):
+            for col in range(layer.shape[2]):
+                for channel in range(layer.shape[1]):
+                    # get value of bit
+                    bit_val = get_bit(ap_fixed(layer[0][channel][row][col],FIXED_WIDTH,FIXED_INT_SIZE),bit)
+                    if bit_val != bit_val_prev:
+                        sa += 1
+                    bit_val_prev = bit_val
+    else:
+        return
+    return sa/size
 
 # Get Bit of Fixed Point
 def get_bit(val,bit):
@@ -35,10 +82,11 @@ def run_net(net,filepath):
     # save as numpy array
     in_ = np.array(im,dtype=np.float32)
     # save each channel of input to network
+    print(in_.shape)
     if len(in_.shape) == 2:
         net.blobs['data'].data[...][0] = copy.deepcopy(np.array(in_,dtype=np.float32))
-    else: 
-        for channel in in_.shape[2]:
+    else:
+        for channel in range(in_.shape[2]):
             net.blobs['data'].data[...][0][channel] = copy.deepcopy(np.array(in_[:,:,channel],dtype=np.float32))
     # run network
     net.forward()
@@ -47,15 +95,20 @@ def run_net(net,filepath):
 
 # Run analysis of layer of the network
 def analyse_layer(layer):
-    pass
+    layer_sa = [ 0 for i in range(FIXED_WIDTH) ]
+    for bit in range(FIXED_WIDTH):
+        layer_sa[bit] = get_sa_layer(layer,bit)
+    print(layer_sa)
 
 #Run analysis across the whole network
 def analyse_net(net):
     for layer in net.blobs:
-        analyse_layer(layer)
+        analyse_layer(net.blobs[layer].data[...])
+        #print(net.blobs[layer].data[...].shape)
+        #print(get_sa_layer(net.blobs[layer].data[...],1))
 
 def main(argv):
-  
+
     model_path    = ''
     data_path     = ''
     weights_path  = ''
@@ -76,7 +129,7 @@ def main(argv):
         elif opt in ('-w'):
             weights_path = arg
 
-    # Initialise Network 
+    # Initialise Network
     net = caffe.Classifier(model_path,weights_path)
 
     # Run for given data
@@ -86,4 +139,6 @@ def main(argv):
     analyse_net(net)
 
 if __name__=="__main__":
-    main(sys.argv[1:])
+    #print(hamming_distance(3,0))
+    plot_image('data/alexnet.jpg')
+    #main(sys.argv[1:])
