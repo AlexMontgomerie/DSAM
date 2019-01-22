@@ -11,6 +11,12 @@ import matplotlib.pyplot as plt
 FIXED_WIDTH     = 16
 FIXED_INT_SIZE  = 4
 
+def num_ones_in_word(word):
+    val = 0
+    for i in range(8):
+        val += (word >> i) & 1
+    return val 
+
 def hamming_distance(x1,x2):
     dist = x1 ^ x2
     return bin(dist).count('1')
@@ -141,4 +147,4 @@ def main(argv):
 if __name__=="__main__":
     #print(hamming_distance(3,0))
     plot_image('data/alexnet.jpg')
-    #main(sys.argv[1:])
+    main(sys.argv[1:])
