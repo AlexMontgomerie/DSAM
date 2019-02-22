@@ -12,33 +12,23 @@ import re
 FIXED_WIDTH     = 16
 FIXED_INT_SIZE  = 4
 
-def hamming_distance(x1,x2):
-    dist = x1 ^ x2
-    return bin(dist).count('1')
+# DATA TYPES
+def fixed16(val):
+    return (int(val*(2<<(FIXED_WIDTH-FIXED_INT_SIZE))))&((2<<FIXED_WIDTH)-1)
 
-def plot_image(filepath):
-    # get image from filepath
-    im = Image.open(filepath)
-    # save as numpy array
-    im = np.array(im,dtype=np.float32)
+# LAYER FUNCTIONS
+def layer_to_stream(layer,quantiser=fixed16):
+    stream = []
+    for row in range(im.shape[3]):
+        for col in range(im.shape[2]):
+            for channel in range(im.shape[1]):
+                stream.append(quantiser(layer[0][channel][row][col]))
+    return np.array(stream)
 
-    print()
 
-    im_folded = []
+# ENCODING METHODS
 
-    for row in range(im.shape[0]):
-        for col in range(im.shape[1]):
-            for channel in range(im.shape[2]):
-                im_folded.append(int(im[row,col,channel]))
-    #print(im_folded)
-    #plt.plot(im_folded[:500])
-
-    im_sa = [hamming_distance(im_folded[i],im_folded[i-1]) for i in range(1,len(im_folded))]
-
-    plt.plot(im_sa)
-
-    plt.show()
-
+# ANALYSIS
 def entropy(p_arr,bits):
     h = 0
     for p in p_arr:
@@ -48,25 +38,22 @@ def entropy(p_arr,bits):
             h -= p*math.log(p,2) + (1-p)*math.log(1-p,2)
     return h
 
-# get the switching activity for a layer
-def get_sa_layer(layer,bit):
-    size = 0
-    bit_val_prev = 0
-    sa = 0
-    # iterate: channels,width,rows
-    if len(layer.shape) == 4:
-        size = layer.shape[1]*layer.shape[2]*layer.shape[3]
-        for row in range(layer.shape[3]):
-            for col in range(layer.shape[2]):
-                for channel in range(layer.shape[1]):
-                    # get value of bit
-                    bit_val = get_bit(ap_fixed(layer[0][channel][row][col],FIXED_WIDTH,FIXED_INT_SIZE),bit)
-                    if bit_val != bit_val_prev:
-                        sa += 1
-                    bit_val_prev = bit_val
-    else:
-        return
-    return sa/size
+def hamming_distance(x1,x2):
+    dist = x1 ^ x2
+    return bin(dist).count('1')
+
+def get_sa_stream(stream):
+    return [hamming_distance(im_folded[i],im_folded[i-1]) for i in range(1,len(im_folded))]
+
+def get_sa_stream_avg(stream):
+    sa_stream = get_sa_stream(stream)
+    return (sum(sa_stream)/float(len(sa_stream)+1))
+
+def num_ones_in_word(word):
+    val = 0
+    for i in range(8):
+        val += (word >> i) & 1
+    return val
 
 # Get Bit of Fixed Point
 def get_bit(val,bit):
@@ -150,4 +137,4 @@ def main(argv):
 if __name__=="__main__":
     #print(hamming_distance(3,0))
     plot_image('data/alexnet.jpg')
-    #main(sys.argv[1:])
+    main(sys.argv[1:])
