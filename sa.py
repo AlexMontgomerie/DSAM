@@ -7,6 +7,7 @@ import tqdm
 import math
 from PIL import Image
 import matplotlib.pyplot as plt
+import re
 
 FIXED_WIDTH     = 16
 FIXED_INT_SIZE  = 4
@@ -99,13 +100,21 @@ def analyse_layer(layer):
     for bit in range(FIXED_WIDTH):
         layer_sa[bit] = get_sa_layer(layer,bit)
     print(layer_sa)
+    return sum(layer_sa) / len(layer_sa)
+    #return layer_sa
 
 #Run analysis across the whole network
 def analyse_net(net):
+    layer_sa = []
     for layer in net.blobs:
-        analyse_layer(net.blobs[layer].data[...])
+        layer_type = re.match("[a-z]+",str(layer))
+        layer_type = layer_type.group(0)
+        if layer_type=='conv' or layer_type=='pool' or layer_type=='data':
+            layer_sa.append( analyse_layer(net.blobs[layer].data[...]) )
         #print(net.blobs[layer].data[...].shape)
         #print(get_sa_layer(net.blobs[layer].data[...],1))
+    print(layer_sa)
+    return layer_sa
 
 def main(argv):
 
