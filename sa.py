@@ -19,9 +19,9 @@ def fixed16(val):
 # LAYER FUNCTIONS
 def layer_to_stream(layer,quantiser=fixed16):
     stream = []
-    for row in range(im.shape[3]):
-        for col in range(im.shape[2]):
-            for channel in range(im.shape[1]):
+    for row in range(layer.shape[3]):
+        for col in range(layer.shape[2]):
+            for channel in range(layer.shape[1]):
                 stream.append(quantiser(layer[0][channel][row][col]))
     return np.array(stream)
 
@@ -43,7 +43,7 @@ def hamming_distance(x1,x2):
     return bin(dist).count('1')
 
 def get_sa_stream(stream):
-    return [hamming_distance(im_folded[i],im_folded[i-1]) for i in range(1,len(im_folded))]
+    return [hamming_distance(stream[i],stream[i-1])/FIXED_WIDTH for i in range(1,len(stream))]
 
 def get_sa_stream_avg(stream):
     sa_stream = get_sa_stream(stream)
@@ -67,10 +67,12 @@ def ap_fixed(val,width,int_size):
 def run_net(net,filepath):
     # get image from filepath
     im = Image.open(filepath)
+    # resize image
+    shape = net.blobs['data'].data[...].shape
+    im = im.resize((shape[2],shape[3]),Image.ANTIALIAS)
     # save as numpy array
     in_ = np.array(im,dtype=np.float32)
     # save each channel of input to network
-    print(in_.shape)
     if len(in_.shape) == 2:
         net.blobs['data'].data[...][0] = copy.deepcopy(np.array(in_,dtype=np.float32))
     else:
@@ -83,11 +85,16 @@ def run_net(net,filepath):
 
 # Run analysis of layer of the network
 def analyse_layer(layer):
-    layer_sa = [ 0 for i in range(FIXED_WIDTH) ]
-    for bit in range(FIXED_WIDTH):
-        layer_sa[bit] = get_sa_layer(layer,bit)
-    print(layer_sa)
-    return sum(layer_sa) / len(layer_sa)
+    return get_sa_stream_avg(
+        layer_to_stream(
+            layer
+        )
+    )
+    ##layer_sa = [ 0 for i in range(FIXED_WIDTH) ]
+    #for bit in range(FIXED_WIDTH):
+    #    layer_sa[bit] = get_sa_layer(layer,bit)
+    #print(layer_sa)
+    #return sum(layer_sa) / len(layer_sa)
     #return layer_sa
 
 #Run analysis across the whole network
