@@ -90,7 +90,7 @@ def adaptive_encoding(im, block_size):
     plt.plot(im_encoded_sa[0:100])
     plt.plot(im_sa[0:100])
 
-    #plt.show()
+    plt.show()
 
     size = 0
     for i in range(len(encoding)):
@@ -126,11 +126,12 @@ if __name__ == '__main__':
         if layer == 'fc6':
             break
         print(layer)
+        #gray_encoding(copy.deepcopy(net.blobs[layer].data[...]))
         adaptive_encoding(copy.deepcopy(net.blobs[layer].data[...]),block_size)
 
     block_sizes = [10,100,200,500,1000,2000,5000,10000]
-    #block_sizes = [10]
-    #for block_size in block_sizes:
-    #    adaptive_encoding(im,block_size)
 
-    #gray_encoding(im)
+
+    #block_sizes = [10]
+    for block_size in block_sizes:
+        adaptive_encoding(im,block_size)

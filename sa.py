@@ -17,6 +17,7 @@ def fixed16(val):
     return (int(val*(2<<(FIXED_WIDTH-FIXED_INT_SIZE))))&((2<<FIXED_WIDTH)-1)
 
 # LAYER FUNCTIONS
+'''
 def layer_to_stream(layer,quantiser=fixed16):
     stream = []
     for row in range(layer.shape[3]):
@@ -24,7 +25,14 @@ def layer_to_stream(layer,quantiser=fixed16):
             for channel in range(layer.shape[1]):
                 stream.append(quantiser(layer[0][channel][row][col]))
     return np.array(stream)
-
+'''
+def layer_to_stream(layer,quantiser=fixed16):
+    stream = []
+    for row in range(layer.shape[3]):
+        for col in range(layer.shape[2]):
+            for channel in range(layer.shape[1]):
+                stream.append( layer[0][channel][row][col] )
+    return np.array(stream)
 
 # ENCODING METHODS
 
@@ -72,6 +80,8 @@ def run_net(net,filepath):
     im = im.resize((shape[2],shape[3]),Image.ANTIALIAS)
     # save as numpy array
     in_ = np.array(im,dtype=np.float32)
+    # normalise array
+    in_ = np.true_divide(in_, 256)
     # save each channel of input to network
     if len(in_.shape) == 2:
         net.blobs['data'].data[...][0] = copy.deepcopy(np.array(in_,dtype=np.float32))
