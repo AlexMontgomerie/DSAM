@@ -17,7 +17,6 @@ def fixed16(val):
     return (int(val*(2<<(FIXED_WIDTH-FIXED_INT_SIZE))))&((2<<FIXED_WIDTH)-1)
 
 # LAYER FUNCTIONS
-'''
 def layer_to_stream(layer,quantiser=fixed16):
     stream = []
     for row in range(layer.shape[3]):
@@ -25,16 +24,6 @@ def layer_to_stream(layer,quantiser=fixed16):
             for channel in range(layer.shape[1]):
                 stream.append(quantiser(layer[0][channel][row][col]))
     return np.array(stream)
-'''
-def layer_to_stream(layer,quantiser=fixed16):
-    stream = []
-    for row in range(layer.shape[3]):
-        for col in range(layer.shape[2]):
-            for channel in range(layer.shape[1]):
-                stream.append( layer[0][channel][row][col] )
-    return np.array(stream)
-
-# ENCODING METHODS
 
 # ANALYSIS
 def entropy(p_arr,bits):
@@ -72,7 +61,7 @@ def ap_fixed(val,width,int_size):
     return (int(val*(2<<(width-int_size))))&((2<<width)-1)
 
 # Run network
-def run_net(net,filepath):
+def run_net(net,filepath,scale=256):
     # get image from filepath
     im = Image.open(filepath)
     # resize image
@@ -81,7 +70,7 @@ def run_net(net,filepath):
     # save as numpy array
     in_ = np.array(im,dtype=np.float32)
     # normalise array
-    in_ = np.true_divide(in_, 256)
+    in_ = np.true_divide(in_, scale)
     # save each channel of input to network
     if len(in_.shape) == 2:
         net.blobs['data'].data[...][0] = copy.deepcopy(np.array(in_,dtype=np.float32))

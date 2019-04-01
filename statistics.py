@@ -61,6 +61,6 @@ plt.hist(
 plt.show()
 '''
 
-
-plt.acorr( pixels['conv1'], maxlags=30)
-plt.show()
+for layer in pixels:
+    plt.acorr( pixels[layer], maxlags=100)
+    plt.show()
