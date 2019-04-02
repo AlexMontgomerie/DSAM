@@ -13,7 +13,7 @@ from sa import *
 import scipy.stats
 import matplotlib.pyplot as plt
 
-TEST_SIZE=50
+TEST_SIZE=10
 
 # model parameters
 model_path     = 'model/lenet.prototxt'
@@ -69,6 +69,7 @@ def bitwise(stream,size=16,shift=0):
         stream_out.append( ( ( val & ( mask << shift ) ) ) & ((2**FIXED_WIDTH)-1) )
     return stream_out
 
+'''
 for layer in pixels:
     #plt.acorr( pixels[layer], maxlags=100, label=layer)
     #plt.stem( [i for i in range(1,CORR_SIZE)], [ autocorr(pixels[layer], i)[0][1] for i in range(1,CORR_SIZE) ], label=layer)
@@ -85,7 +86,16 @@ for layer in pixels:
     acorr = [ autocorr(pixels[layer], i)[0][1] for i in range(1,CORR_SIZE) ]
     print("Max Auto-Correlation ({layer}) \t = {max}, \t index = {index}".format(layer=layer,max=max(acorr),index=acorr.index(max(acorr))+1 ))
     #plt.show()
+'''
 
+for layer in pixels:
+    corr_total = []
+    for i in range(FIXED_WIDTH):
+        tmp = bitwise(pixels[layer], 1, i)
+        idx = [i for i in range(1,CORR_SIZE)]
+        acorr = [ autocorr(tmp, i)[0][1] for i in range(1,CORR_SIZE) ]
+        corr_total.append( ( max(acorr) , acorr.index(max(acorr))+1 ) )
+    print('{layer} = '.format(layer=layer), corr_total)
 
 '''
 n_bits = [16, 8, 4, 2, 1]
