@@ -1,7 +1,7 @@
 from encoding import *
 import random
 
-TEST_SIZE=5
+TEST_SIZE=50
 
 model_path     = 'model/lenet.prototxt'
 data_path_root = 'data/mnist'
@@ -36,6 +36,7 @@ for f in random_data_files:
             else:
                 pixels[layer] = layer_to_stream(net.blobs[layer].data[...])
 
+'''
 # get baseline switching activity
 for layer in pixels:
     print("{layer} switching activity: \t {sa}".format(layer=layer, sa=get_sa_stream_avg(pixels[layer])) )
@@ -50,14 +51,14 @@ for layer in pixels:
 # adaptive encoding (static)
 pixels_adaptive_encoding_static = {}
 for layer in pixels:
-    pixels_adaptive_encoding_static[layer] = adaptive_encoding_static_stream( pixels[layer] )
+    pixels_adaptive_encoding_static[layer], code_table = adaptive_encoding_static_stream( pixels[layer] )
     #print(pixels_gray_encoding[layer])
-    print("{layer} switching activity (adaptive encoding, static): \t {sa}".format( layer=layer, sa=get_sa_stream_avg(pixels_adaptive_encoding_static[layer]) ) )
+    print("{layer} switching activity (adaptive encoding, static): \t {sa} \t (size={size})".format( layer=layer, sa=get_sa_stream_avg(pixels_adaptive_encoding_static[layer]), size=len(code_table) ) )
 
 # adaptive encoding
 pixels_adaptive_encoding = {}
 for layer in pixels:
-    pixels_adaptive_encoding[layer] = adaptive_encoding_stream( pixels[layer] , 500 )
+    pixels_adaptive_encoding[layer], _ = adaptive_encoding_stream( pixels[layer] , 500 )
     #print(pixels_gray_encoding[layer])
     print("{layer} switching activity (adaptive encoding, 500): \t {sa}".format( layer=layer, sa=get_sa_stream_avg(pixels_adaptive_encoding[layer]) ) )
 
@@ -67,3 +68,44 @@ for layer in pixels:
     pixels_differential_encoding[layer] = differential_encoding_stream( pixels[layer] , 20 )
     #print(pixels_gray_encoding[layer])
     print("{layer} switching activity (differential encoding): \t {sa}".format( layer=layer, sa=get_sa_stream_avg(pixels_differential_encoding[layer]) ) )
+
+'''
+
+######################################################################
+
+block_sizes = [ 25, 50, 75, 100, 150, 200, 250, 500 ]
+#block_sizes = [ 500, 1000 ]
+switching_activity = {}
+mem_size = {}
+
+pixels = {
+    'data' : pixels['data']
+}
+
+for block_size in block_sizes:
+    print('BLOCK_SIZE: ',block_size)
+    #for layer in pixels:
+    for layer in pixels:
+        print(layer)
+        encoding, code_table = adaptive_encoding_stream( pixels[layer] , block_size )
+        if layer in switching_activity:
+            switching_activity[layer].append( get_sa_stream_avg(encoding) )
+            mem_size[layer].append( sum([ len(i) for i in code_table ])/TEST_SIZE )
+        else:
+            switching_activity[layer] = [ get_sa_stream_avg(encoding) ]
+            mem_size[layer] = [ sum([ len(i) for i in code_table ])/TEST_SIZE ]
+
+
+fig, ax1 = plt.subplots()
+for layer in pixels:
+    ax1.plot(block_sizes,  switching_activity[layer], label=layer, linestyle='--')
+ax1.set_xlabel('Block Size')
+ax1.set_ylabel('Switching Activity (%)')
+
+ax2 = ax1.twinx()
+for layer in pixels:
+    ax2.plot(block_sizes, mem_size[layer], label=layer, linestyle='-' )
+ax2.set_ylabel('Memory Size')
+plt.legend()
+plt.grid()
+plt.show()

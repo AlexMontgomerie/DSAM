@@ -84,17 +84,8 @@ def run_net(net,filepath,scale=256):
 
 # Run analysis of layer of the network
 def analyse_layer(layer):
-    return get_sa_stream_avg(
-        layer_to_stream(
-            layer
-        )
-    )
-    ##layer_sa = [ 0 for i in range(FIXED_WIDTH) ]
-    #for bit in range(FIXED_WIDTH):
-    #    layer_sa[bit] = get_sa_layer(layer,bit)
-    #print(layer_sa)
-    #return sum(layer_sa) / len(layer_sa)
-    #return layer_sa
+    return get_sa_stream_avg(layer_to_stream(layer))
+
 
 #Run analysis across the whole network
 def analyse_net(net):
@@ -104,9 +95,6 @@ def analyse_net(net):
         layer_type = layer_type.group(0)
         if layer_type=='conv' or layer_type=='pool' or layer_type=='data':
             layer_sa.append( analyse_layer(net.blobs[layer].data[...]) )
-        #print(net.blobs[layer].data[...].shape)
-        #print(get_sa_layer(net.blobs[layer].data[...],1))
-    print(layer_sa)
     return layer_sa
 
 def main(argv):

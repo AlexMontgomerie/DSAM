@@ -1,5 +1,9 @@
 from sa import *
 from operator import itemgetter
+from joblib import Parallel, delayed
+import dill
+import multiprocessing
+from multiprocessing import Pool
 
 def int2bin(n):
     bits = []
@@ -141,17 +145,19 @@ def adaptive_encoding_static_stream(stream):
         val = correlator( prev, code_table[stream[i]] )
         prev = val
         encoded.append(val)
-    return encoded
+    return encoded, code_table
 
 def adaptive_encoding_stream(stream, block_size):
     # number of blocks
     num_blocks = math.floor(len(stream)/block_size) # - 1
-    symbol_count = [ {} for i in range(num_blocks) ]
-    code_table   = [ {} for i in range(num_blocks) ]
-    prev = 0
-    encoded = []
-    # iterate over blocks
+    symbol_count = [{}] * num_blocks
+    code_table   = [{}] * num_blocks
+    #prev = 0
+    encoded = [0] * len(stream)
+
+    # block encoding function
     for block_index in range(num_blocks):
+        prev = 0
         # get symbol count
         for i in range( block_index*block_size, min((block_index+1)*block_size, len(stream)) ):
             if stream[i] in symbol_count:
@@ -163,12 +169,20 @@ def adaptive_encoding_stream(stream, block_size):
         for i in range(len(scheme)-1):
             code_table[block_index][scheme[-(i+1)][0]] = i
         code_table[block_index][scheme[0][0]] = len(scheme)-1
+
         # encode stream
         for i in range( block_index*block_size, min((block_index+1)*block_size, len(stream)) ):
             val = correlator( prev, code_table[block_index][stream[i]] )
             prev = val
-            encoded.append(val)
-    return encoded
+            encoded[i] = val
+
+    # iterate over blocks
+    #num_cores = multiprocessing.cpu_count()
+    #p = Pool(num_cores)
+    #p.map(encode, [ i for i in range(num_blocks) ])
+    #Parallel(n_jobs=num_cores)(delayed(encode)(i) for i in range(num_blocks))
+
+    return encoded, code_table
 
 def differential_encoding_stream(stream, distance=1):
     encoded = []

@@ -13,7 +13,7 @@ from sa import *
 import scipy.stats
 import matplotlib.pyplot as plt
 
-TEST_SIZE=10
+TEST_SIZE=50
 
 # model parameters
 model_path     = 'model/lenet.prototxt'
@@ -34,9 +34,7 @@ for (dirpath, dirnames, filenames) in os.walk(data_path_root):
 random_data_files = [ random.choice(data_files) for x in range(TEST_SIZE) ]
 
 # save values for each layer
-pixels = {
-
-}
+pixels = {}
 
 # run network
 for f in random_data_files:
@@ -47,11 +45,9 @@ for f in random_data_files:
         layer_type = layer_type.group(0)
         if layer_type=='conv' or layer_type=='pool' or layer_type=='data':
             if layer in pixels:
-                pixels[layer] = np.concatenate( [ pixels[layer], layer_to_stream(net.blobs[layer].data[...], quantiser=float) ] )
+                pixels[layer] = np.concatenate( [ pixels[layer], layer_to_stream(net.blobs[layer].data[...]) ] )
             else:
-                pixels[layer] = layer_to_stream(net.blobs[layer].data[...], quantiser=float)
-
-print(pixels)
+                pixels[layer] = layer_to_stream(net.blobs[layer].data[...])
 
 '''
 plt.hist(
@@ -60,7 +56,41 @@ plt.hist(
 )
 plt.show()
 '''
+def autocorr(x, t=1):
+    return np.corrcoef(np.array([x[:-t], x[t:]]))
+
+CORR_SIZE=100
+
+def bitwise(stream,size=16,shift=0):
+    mask = (2**size) - 1
+    stream_out = []
+    for val in stream:
+        #stream_out.append( ( ( val & ( mask << shift ) ) >> shift ) & ((2**FIXED_WIDTH)-1) )
+        stream_out.append( ( ( val & ( mask << shift ) ) ) & ((2**FIXED_WIDTH)-1) )
+    return stream_out
 
 for layer in pixels:
-    plt.acorr( pixels[layer], maxlags=100)
-    plt.show()
+    #plt.acorr( pixels[layer], maxlags=100, label=layer)
+    #plt.stem( [i for i in range(1,CORR_SIZE)], [ autocorr(pixels[layer], i)[0][1] for i in range(1,CORR_SIZE) ], label=layer)
+    tmp = bitwise(pixels[layer], 8, 8)
+    #tmp = bitwise(pixels[layer])
+    idx = [i for i in range(1,CORR_SIZE)]
+    #acorr = [ autocorr(pixels[layer], i)[0][1] for i in range(1,CORR_SIZE) ]
+    acorr = [ autocorr(tmp, i)[0][1] for i in range(1,CORR_SIZE) ]
+    print("Max Auto-Correlation ({layer}) \t = {max}, \t index = {index}".format(layer=layer,max=max(acorr),index=acorr.index(max(acorr))+1 ))
+    #plt.show()
+
+print("\n\n")
+for layer in pixels:
+    acorr = [ autocorr(pixels[layer], i)[0][1] for i in range(1,CORR_SIZE) ]
+    print("Max Auto-Correlation ({layer}) \t = {max}, \t index = {index}".format(layer=layer,max=max(acorr),index=acorr.index(max(acorr))+1 ))
+    #plt.show()
+
+
+'''
+n_bits = [16, 8, 4, 2, 1]
+for n_bit in n_bits:
+    n_blocks = int(FIXED_WIDTH/n_bits)
+
+    for block_index in n_blocks
+'''
