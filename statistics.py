@@ -10,10 +10,11 @@ import matplotlib.pyplot as plt
 import re
 import random
 from sa import *
+from encoding import *
 import scipy.stats
 import matplotlib.pyplot as plt
 
-TEST_SIZE=10
+TEST_SIZE=1
 
 # model parameters
 # model_path     = 'model/lenet.prototxt'
@@ -63,7 +64,7 @@ plt.show()
 def autocorr(x, t=1):
     return np.corrcoef(np.array([x[:-t], x[t:]]))
 
-CORR_SIZE=100
+CORR_SIZE=600
 
 def bitwise(stream,size=16,shift=0):
     mask = (2**size) - 1
@@ -73,6 +74,7 @@ def bitwise(stream,size=16,shift=0):
         stream_out.append( ( ( val & ( mask << shift ) ) ) & ((2**FIXED_WIDTH)-1) )
     return stream_out
 
+'''
 print("Gathering Statistics... ")
 for layer in pixels:
     #plt.acorr( pixels[layer], maxlags=100, label=layer)
@@ -86,6 +88,38 @@ for layer in pixels:
     print("Max Auto-Correlation ({layer}) \t = {max}, \t index = {index}".format(layer=layer,max=max(acorr),index=acorr.index(max(acorr))+1 ))
     #plt.show()
 
+# encode pixels
+pixels_encoded = {}
+offset = {
+  "data"  : 3,
+  "conv1" : 96,
+  "pool1" : 96,
+  "conv2" : 256,
+  "pool2" : 256,
+  "conv3" : 384,
+  "conv4" : 384,
+  "conv5" : 256,
+  "pool5" : 256
+}
+for layer in pixels:
+    pixels_encoded[layer] = differential_encoding_stream( pixels[layer] , offset[layer])
+ 
+print("Gathering Statistics... ")
+for layer in pixels_encoded:
+    #plt.acorr( pixels[layer], maxlags=100, label=layer)
+    #plt.stem( [i for i in range(1,CORR_SIZE)], [ autocorr(pixels[layer], i)[0][1] for i in range(1,CORR_SIZE) ], label=layer)
+    # tmp = bitwise(pixels[layer], 8, 8)
+    tmp = pixels_encoded[layer]
+    #tmp = bitwise(pixels[layer])
+    idx = [i for i in range(1,CORR_SIZE)]
+    #acorr = [ autocorr(pixels[layer], i)[0][1] for i in range(1,CORR_SIZE) ]
+    acorr = [ autocorr(tmp, i)[0][1] for i in range(1,CORR_SIZE) ]
+    print("Max Auto-Correlation ({layer}) \t = {max}, \t index = {index}".format(layer=layer,max=max(acorr),index=acorr.index(max(acorr))+1 ))
+    #plt.show()
+'''
+
+
+
 '''
 print("\n\n")
 for layer in pixels:
@@ -94,7 +128,8 @@ for layer in pixels:
     #plt.show()
 
 '''
-'''
+
+print("Running Bitwise Correlation ... ")
 for layer in pixels:
     corr_total = []
     for i in range(FIXED_WIDTH):
@@ -103,6 +138,8 @@ for layer in pixels:
         acorr = [ autocorr(tmp, i)[0][1] for i in range(1,CORR_SIZE) ]
         corr_total.append( ( max(acorr) , acorr.index(max(acorr))+1 ) )
     print('{layer} = '.format(layer=layer), corr_total)
+
+'''
 for layer in pixels:
     corr_total = [0 for i in range(CORR_SIZE-1)]
     for index in range(len(pixels[layer])-2*CORR_SIZE):

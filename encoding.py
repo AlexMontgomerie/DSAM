@@ -100,7 +100,7 @@ def differential_encoding_stream(stream, distance=1):
         encoded.append(stream[i])
     # encode the rest
     for i in range(distance,len(stream)):
-        encoded.append((stream[i]^stream[i-distance]))
+        encoded.append((stream[i]-stream[i-distance]))
     return encoded
 
 
@@ -111,7 +111,7 @@ def differential_encoding_stream_decode(stream, distance=1):
         decoded.append(stream[i])
     # encode the rest
     for i in range(distance,len(stream)):
-        decoded.append((stream[i]^decoded[i-distance]))
+        decoded.append((stream[i]+decoded[i-distance]))
     return decoded
 
 
@@ -122,14 +122,19 @@ if __name__ == '__main__':
             0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF,
             0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF ]
 
-    tmp = [ 1, 4345, 546, 6566, 76, 77, 8, 999, 9, 643, 34]
+    tmp = [ 1, 3443, 436, 3, 4436, 543, 9, 4321, 435, 1]
+    #tmp = [ 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]
 
-    encoded = differential_encoding_stream(tmp)
+    encoded = differential_encoding_stream(tmp,3)
+    encoded2 = differential_encoding_stream(encoded)
 
     print("switching activity           : \t {sa}".format(sa=get_sa_stream_avg(tmp)) )
     print("switching activity (encoded) : \t {sa}".format(sa=get_sa_stream_avg(encoded)) )
+    print("switching activity (encoded) : \t {sa}".format(sa=get_sa_stream_avg(encoded2)) )
     print(tmp)
     print(encoded)
+    print(encoded2)
     print(differential_encoding_stream_decode(encoded))
+    print(differential_encoding_stream_decode(differential_encoding_stream_decode(encoded2)))
 
 

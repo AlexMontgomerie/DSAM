@@ -1,7 +1,7 @@
 from encoding import *
 import random
 
-TEST_SIZE=10
+TEST_SIZE=1
 
 model_path     = 'model/alexnet.prototxt'
 data_path_root = 'data/imagenet'
@@ -75,17 +75,35 @@ offset = {
   "data"  : 3,
   "conv1" : 96,
   "pool1" : 96,
-  "conv2" : 14,
-  "pool2" : 14,
-  "conv3" : 84,
-  "conv4" : 96,
-  "conv5" : 37,
-  "pool5" : 7
+  "conv2" : 256,
+  "pool2" : 256,
+  "conv3" : 384,
+  "conv4" : 384,
+  "conv5" : 256,
+  "pool5" : 256
 }
 for layer in pixels:
     pixels_differential_encoding[layer] = differential_encoding_stream( pixels[layer] , offset[layer])
     #print(pixels_gray_encoding[layer])
     print("{layer} switching activity (differential encoding): \t {sa}".format( layer=layer, sa=get_sa_stream_avg(pixels_differential_encoding[layer]) ) )
+
+print("DIFFERENTIAL ENCODING")
+pixels_differential_encoding_2 = {}
+offset = {
+  "data"  : 1,
+  "conv1" : 96,
+  "pool1" : 192,
+  "conv2" : 256,
+  "pool2" : 512,
+  "conv3" : 384,
+  "conv4" : 384,
+  "conv5" : 256,
+  "pool5" : 256
+}
+for layer in pixels_differential_encoding:
+    pixels_differential_encoding_2[layer] = differential_encoding_stream( pixels_differential_encoding[layer] , offset[layer])
+    #print(pixels_gray_encoding[layer])
+    print("{layer} switching activity (differential encoding): \t {sa}".format( layer=layer, sa=get_sa_stream_avg(pixels_differential_encoding_2[layer]) ) )
 
 
 ######################################################################
