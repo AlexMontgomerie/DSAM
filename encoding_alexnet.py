@@ -1,7 +1,9 @@
 from encoding import *
 import random
 
-TEST_SIZE=1
+random.seed(127232)
+
+TEST_SIZE=100
 
 model_path     = 'model/alexnet.prototxt'
 data_path_root = 'data/imagenet'

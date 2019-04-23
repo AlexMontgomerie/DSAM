@@ -5,6 +5,7 @@ import dill
 import multiprocessing
 from multiprocessing import Pool
 
+
 def int2bin(n):
     bits = []
     for i in range(FIXED_WIDTH):
@@ -98,9 +99,12 @@ def differential_encoding_stream(stream, distance=1):
     # buffer initial values
     for i in range(distance):
         encoded.append(stream[i])
+        if i != 0:
+            encoded[i] = encoded[i] ^ encoded[i-1]
     # encode the rest
     for i in range(distance,len(stream)):
-        encoded.append((stream[i]-stream[i-distance]))
+        encoded.append( (stream[i]-stream[i-distance])&((2**FIXED_WIDTH)-1) )
+        encoded[i] = encoded[i] ^ encoded[i-1]
     return encoded
 
 
