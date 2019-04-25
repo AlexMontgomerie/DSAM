@@ -3,7 +3,7 @@ import random
 
 random.seed(127232)
 
-TEST_SIZE=100
+TEST_SIZE=50
 
 model_path     = 'model/alexnet.prototxt'
 data_path_root = 'data/imagenet'
@@ -25,6 +25,7 @@ random_data_files = [ random.choice(data_files) for x in range(TEST_SIZE) ]
 # save values for each layer
 pixels = {}
 
+'''
 # run network
 print("RUNNING NETWORK")
 for f in random_data_files:
@@ -38,6 +39,15 @@ for f in random_data_files:
                 pixels[layer] = np.concatenate( [ pixels[layer], layer_to_stream(net.blobs[layer].data[...] ) ] )
             else:
                 pixels[layer] = layer_to_stream(net.blobs[layer].data[...])
+
+
+np.save('data/pixels_{}.npy'.format(TEST_SIZE),pixels)
+'''
+
+pixels = np.load('data/pixels_{}.npy'.format(TEST_SIZE))
+
+print(pixels.item())
+pixels = pixels.item()
 
 # get baseline switching activity
 print("BASELINE SA")
