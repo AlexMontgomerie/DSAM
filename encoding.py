@@ -94,33 +94,13 @@ def adaptive_encoding_stream(stream, block_size):
 
     return encoded, code_table
 
+# V1
+
 def differential_encoding_stream(stream, distance=1):
     encoded = []
-    # buffer initial values
-    '''
-    for i in range(distance):
-        encoded.append(stream[i])
-        if i != 0:
-            encoded[i] = encoded[i] ^ encoded[i-1]
-    # encode the rest
-    for i in range(distance,len(stream)):
-        encoded.append( (stream[i]-stream[i-distance])&((2**FIXED_WIDTH)-1) )
-        encoded[i] = encoded[i] ^ encoded[i-1]
-    #return encoded
-
-    print(encoded)
-    '''
-    #encoded = np.subtract( stream[distance:len(stream)], stream[0:(len(stream)-distance)] )
     encoded = np.bitwise_xor( stream[distance:len(stream)], stream[0:(len(stream)-distance)] )
     encoded = np.concatenate( (stream[0:distance], encoded) )
-    #encoded = np.absolute(encoded)
-    #encoded = np.bitwise_and(encoded, ((2**FIXED_WIDTH)-1) )
-    #encoded = np.concatenate( ( [encoded[0]],
-    #    np.bitwise_xor(encoded[1:len(encoded)], encoded[0:(len(encoded)-1)]) ) )
-    #print(encoded)
-
     return encoded
-
 
 def differential_encoding_stream_decode(stream, distance=1):
     decoded = []
@@ -129,9 +109,43 @@ def differential_encoding_stream_decode(stream, distance=1):
         decoded.append(stream[i])
     # encode the rest
     for i in range(distance,len(stream)):
-        decoded.append((stream[i]+decoded[i-distance]))
+        #decoded.append((stream[i]+decoded[i-distance]))
+        decoded.append((stream[i]^decoded[i-distance]))
     return decoded
 
+# V2
+
+def differential_encoding_stream_2(stream, distance=1):
+    encoded = stream[:distance]
+    #encoded = []
+    for i in range(distance,len(stream)):
+        encoded.append(stream[i] - stream[i-distance])
+    #encoded = np.subtract( stream[distance:len(stream)], stream[0:(len(stream)-distance)] )
+    #encoded = np.concatenate( (stream[0:distance], encoded) )
+    print(encoded)
+    encoded_out = [encoded[0]]
+    for i in range(1,len(encoded)):
+        encoded_out.append(encoded[i]^encoded_out[i-1])
+    #encoded = np.bitwise_xor( encoded[1:len(stream)], encoded[0:(len(stream)-1)] )
+    #encoded = np.concatenate( ([stream[0]], encoded) )
+    #encoded = np.concatenate( (stream[0:distance], encoded) )
+    #return encoded
+    return encoded_out
+
+def differential_encoding_stream_2_decode(stream, distance=1):
+    decoded = [stream[0]]
+    # decorrelate
+    for i in range(1,len(stream)):
+        decoded.append(stream[i]^stream[i-1])
+    print(decoded)
+    decoded_out = decoded[:distance]
+    print(decoded_out)
+    for i in range(distance,len(stream)):
+        decoded_out.append(decoded[i] + decoded_out[i-distance])
+    #tmp = np.add(decoded[distance:len(decoded)], decoded[0:(len(decoded)-distance)])
+    #decoded = np.concatenate( (decoded[0:distance], tmp) )
+
+    return decoded_out
 
 if __name__ == '__main__':
 
@@ -144,13 +158,16 @@ if __name__ == '__main__':
     #tmp = [ 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]
     #tmp = [ 1.78978, 0.9990, 0.9999, 1.798, 0.68, 0.679, 1.2345, 0.6757, 0.098676, 1.456 ]
 
-    encoded = differential_encoding_stream(tmp,3)
-    encoded2 = differential_encoding_stream(encoded)
+    #encoded = differential_encoding_stream(tmp,3)
+    #encoded2 = differential_encoding_stream_decode(encoded, 3)
+    print(tmp)
+    encoded = differential_encoding_stream_2(tmp,3)
+    encoded2 = differential_encoding_stream_2_decode(encoded, 3)
     print("switching activity           : \t {sa}".format(sa=get_sa_stream_avg(tmp)) )
     print("switching activity (encoded) : \t {sa}".format(sa=get_sa_stream_avg(encoded)) )
     print("switching activity (encoded) : \t {sa}".format(sa=get_sa_stream_avg(encoded2)) )
     print(tmp)
     print(encoded)
     print(encoded2)
-    print(differential_encoding_stream_decode(encoded))
-    print(differential_encoding_stream_decode(differential_encoding_stream_decode(encoded2)))
+    #print(differential_encoding_stream_decode(encoded))
+    #print(differential_encoding_stream_decode(differential_encoding_stream_decode(encoded2)))

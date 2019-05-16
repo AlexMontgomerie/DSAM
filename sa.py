@@ -40,11 +40,16 @@ def hamming_distance(x1,x2):
     return bin(dist).count('1')
 
 def get_sa_stream(stream):
-    return [hamming_distance(stream[i],stream[i-1])/FIXED_WIDTH for i in range(1,len(stream))]
+    xor = np.bitwise_xor(stream[1:],stream[:-1])
+    f = lambda x : bin(x).count('1')/FIXED_WIDTH # hamming distance
+    vf = np.vectorize(f)
+    #return [hamming_distance(stream[i],stream[i-1])/FIXED_WIDTH for i in range(1,len(stream))]
+    return vf(xor)
 
 def get_sa_stream_avg(stream):
     sa_stream = get_sa_stream(stream)
-    return (sum(sa_stream)/float(len(sa_stream)+1))
+    #return (sum(sa_stream)/float(len(sa_stream)+1))
+    return np.mean(sa_stream)
 
 def num_ones_in_word(word):
     val = 0
