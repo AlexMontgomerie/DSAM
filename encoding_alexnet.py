@@ -39,10 +39,10 @@ for f in random_data_files:
                 pixels[layer] = np.concatenate( [ pixels[layer], layer_to_stream(net.blobs[layer].data[...] ) ] )
             else:
                 pixels[layer] = layer_to_stream(net.blobs[layer].data[...])
-
-
-np.save('data/pixels_{}.npy'.format(TEST_SIZE),pixels)
 '''
+
+#np.save('data/pixels_{}.npy'.format(TEST_SIZE),pixels)
+
 
 pixels = np.load('data/pixels_{}.npy'.format(TEST_SIZE))
 
@@ -103,14 +103,14 @@ print("DIFFERENTIAL ENCODING")
 pixels_differential_encoding_2 = {}
 offset = {
   "data"  : 1,
-  "conv1" : 96,
-  "pool1" : 192,
-  "conv2" : 256,
-  "pool2" : 512,
-  "conv3" : 384,
-  "conv4" : 384,
-  "conv5" : 256,
-  "pool5" : 256
+  "conv1" : 1,
+  "pool1" : 1,
+  "conv2" : 1,
+  "pool2" : 1,
+  "conv3" : 1,
+  "conv4" : 1,
+  "conv5" : 1,
+  "pool5" : 1
 }
 for layer in pixels_differential_encoding:
     pixels_differential_encoding_2[layer] = differential_encoding_stream( pixels_differential_encoding[layer] , offset[layer])

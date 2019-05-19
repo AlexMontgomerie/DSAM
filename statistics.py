@@ -14,7 +14,7 @@ from encoding import *
 import scipy.stats
 import matplotlib.pyplot as plt
 
-TEST_SIZE=1
+TEST_SIZE=10
 
 # model parameters
 # model_path     = 'model/lenet.prototxt'
@@ -73,9 +73,8 @@ def bitwise(stream,size=16,shift=0):
         #stream_out.append( ( ( val & ( mask << shift ) ) >> shift ) & ((2**FIXED_WIDTH)-1) )
         stream_out.append( ( ( val & ( mask << shift ) ) ) & ((2**FIXED_WIDTH)-1) )
     return stream_out
-
 '''
-print("Gathering Statistics... ")
+print("Gathering Statistics... (correlation) ")
 for layer in pixels:
     #plt.acorr( pixels[layer], maxlags=100, label=layer)
     #plt.stem( [i for i in range(1,CORR_SIZE)], [ autocorr(pixels[layer], i)[0][1] for i in range(1,CORR_SIZE) ], label=layer)
@@ -87,7 +86,20 @@ for layer in pixels:
     acorr = [ autocorr(tmp, i)[0][1] for i in range(1,CORR_SIZE) ]
     print("Max Auto-Correlation ({layer}) \t = {max}, \t index = {index}".format(layer=layer,max=max(acorr),index=acorr.index(max(acorr))+1 ))
     #plt.show()
+'''
+print("Gathering Statistics... (correlation) ")
+for layer in pixels:
+    tmp = pixels[layer]
+    idx = [i for i in range(1,CORR_SIZE)]
+    dist = []
+    for i in range(1,CORR_SIZE):
+        dist.append(np.linalg.norm(np.subtract(tmp[i:], tmp[:-i]))/len(tmp[i:]))
+    
+    print("Min Dist ({layer}) \t = {min}, \t index = {index}".format(layer=layer,min=min(dist),index=dist.index(min(dist))+1 ))
+    #plt.show()
 
+
+'''
 # encode pixels
 pixels_encoded = {}
 offset = {
@@ -129,6 +141,7 @@ for layer in pixels:
 
 '''
 
+'''
 print("Running Bitwise Correlation ... ")
 for layer in pixels:
     corr_total = []
@@ -138,6 +151,7 @@ for layer in pixels:
         acorr = [ autocorr(tmp, i)[0][1] for i in range(1,CORR_SIZE) ]
         corr_total.append( ( max(acorr) , acorr.index(max(acorr))+1 ) )
     print('{layer} = '.format(layer=layer), corr_total)
+'''
 
 '''
 for layer in pixels:

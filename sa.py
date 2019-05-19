@@ -18,12 +18,18 @@ def fixed16(val):
 
 # LAYER FUNCTIONS
 def layer_to_stream(layer,quantiser=fixed16):
+    '''
     stream = []
     for row in range(layer.shape[3]):
         for col in range(layer.shape[2]):
             for channel in range(layer.shape[1]):
-                stream.append(quantiser(layer[0][channel][row][col]))
-    return np.array(stream)
+                #stream.append(quantiser(layer[0][channel][row][col]))
+                stream.append(layer[0][channel][row][col])
+    stream = np.array(stream)
+    '''
+    stream = layer.reshape(-1)
+    vf = np.vectorize(quantiser)
+    return vf(stream)
 
 # ANALYSIS
 def entropy(p_arr,bits):
