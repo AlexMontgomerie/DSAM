@@ -114,23 +114,24 @@ def differential_encoding_stream_decode(stream, distance=1):
     return decoded
 
 # V2
-
 def differential_encoding_stream_2(stream, distance=1):
-    encoded = stream[:distance]
-    #encoded = []
+    encoded = stream[:distance].tolist()
+    #encoded = stream[:distance]
     for i in range(distance,len(stream)):
         encoded.append(stream[i] - stream[i-distance])
-    #encoded = np.subtract( stream[distance:len(stream)], stream[0:(len(stream)-distance)] )
-    #encoded = np.concatenate( (stream[0:distance], encoded) )
-    print(encoded)
+        #encoded.append(abs(stream[i] - stream[i-distance]))
+    #encoded = np.bitwise_and( encoded, 0xFFFF )
     encoded_out = [encoded[0]]
     for i in range(1,len(encoded)):
         encoded_out.append(encoded[i]^encoded_out[i-1])
-    #encoded = np.bitwise_xor( encoded[1:len(stream)], encoded[0:(len(stream)-1)] )
-    #encoded = np.concatenate( ([stream[0]], encoded) )
-    #encoded = np.concatenate( (stream[0:distance], encoded) )
     #return encoded
-    return encoded_out
+    return np.array(encoded_out)
+
+#def differential_encoding_stream_2(stream, distance=1):
+#    encoded = np.subtract( stream[distance:len(stream)], stream[0:(len(stream)-distance)] )
+#    encoded = np.bitwise_xor( stream[1:len(stream)], stream[0:(len(stream)-1)] )
+#    encoded = np.concatenate( (stream[0:distance], encoded) )
+#    return encoded
 
 def differential_encoding_stream_2_decode(stream, distance=1):
     decoded = [stream[0]]

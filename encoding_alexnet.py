@@ -49,10 +49,13 @@ pixels = np.load('data/pixels_{}.npy'.format(TEST_SIZE))
 print(pixels.item())
 pixels = pixels.item()
 
+base_sa = {}
+
 # get baseline switching activity
 print("BASELINE SA")
 for layer in pixels:
-    print("{layer} switching activity: \t {sa}".format(layer=layer, sa=get_sa_stream_avg(pixels[layer])) )
+    base_sa[layer] = get_sa_stream_avg(pixels[layer])
+    print("{layer} switching activity: \t {sa}".format(layer=layer, sa=base_sa[layer]) )
 
 '''
 # gray encoding
@@ -63,13 +66,15 @@ for layer in pixels:
     print("{layer} switching activity (gray encoding): \t {sa}".format( layer=layer, sa=get_sa_stream_avg(pixels_gray_encoding[layer]) ) )
 
 '''
+
 # adaptive encoding (static)
 print("ADAPTIVE ENCODING STATIC")
 pixels_adaptive_encoding_static = {}
 for layer in pixels:
     pixels_adaptive_encoding_static[layer], code_table = adaptive_encoding_static_stream( pixels[layer] )
-    #print(pixels_gray_encoding[layer])
-    print("{layer} switching activity (adaptive encoding, static): \t {sa} \t (size={size})".format( layer=layer, sa=get_sa_stream_avg(pixels_adaptive_encoding_static[layer]), size=len(code_table) ) )
+    sa_avg = get_sa_stream_avg(pixels_adaptive_encoding_static[layer])
+    print("{layer} switching activity (adaptive encoding, static): \t {sa} \t (size={size}), reduction = {reduction}".format( 
+        layer=layer, sa=sa_avg, size=len(code_table), reduction= (sa_avg/base_sa[layer])*100 ) )
 
 '''
 # adaptive encoding
@@ -95,9 +100,10 @@ offset = {
   "pool5" : 256
 }
 for layer in pixels:
-    pixels_differential_encoding[layer] = differential_encoding_stream( pixels[layer] , offset[layer])
-    #print(pixels_gray_encoding[layer])
-    print("{layer} switching activity (differential encoding): \t {sa}".format( layer=layer, sa=get_sa_stream_avg(pixels_differential_encoding[layer]) ) )
+    pixels_differential_encoding[layer] = differential_encoding_stream_2( pixels[layer] , offset[layer])
+    sa_avg = get_sa_stream_avg(pixels_differential_encoding[layer])
+    print("{layer} switching activity (differential encoding): \t {sa}, reduction = {reduction}".format( 
+        layer=layer, sa=sa_avg, reduction = (sa_avg/base_sa[layer])*100 ) )
 
 print("DIFFERENTIAL ENCODING")
 pixels_differential_encoding_2 = {}
