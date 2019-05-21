@@ -138,15 +138,21 @@ def differential_encoding_stream_2_decode(stream, distance=1):
     # decorrelate
     for i in range(1,len(stream)):
         decoded.append(stream[i]^stream[i-1])
-    print(decoded)
     decoded_out = decoded[:distance]
-    print(decoded_out)
     for i in range(distance,len(stream)):
         decoded_out.append(decoded[i] + decoded_out[i-distance])
     #tmp = np.add(decoded[distance:len(decoded)], decoded[0:(len(decoded)-distance)])
     #decoded = np.concatenate( (decoded[0:distance], tmp) )
 
     return decoded_out
+
+def differential_encoding_pure_stream(stream):
+    encoded = [stream[0]]
+    #encoded = stream[:distance]
+    for i in range(1,len(stream)):
+        encoded.append(stream[i] - stream[i-1])
+    return np.array(encoded)
+
 
 if __name__ == '__main__':
 

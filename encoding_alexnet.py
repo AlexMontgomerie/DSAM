@@ -67,6 +67,7 @@ for layer in pixels:
 
 '''
 
+'''
 # adaptive encoding (static)
 print("ADAPTIVE ENCODING STATIC")
 pixels_adaptive_encoding_static = {}
@@ -76,7 +77,6 @@ for layer in pixels:
     print("{layer} switching activity (adaptive encoding, static): \t {sa} \t (size={size}), reduction = {reduction}".format( 
         layer=layer, sa=sa_avg, size=len(code_table), reduction= (sa_avg/base_sa[layer])*100 ) )
 
-'''
 # adaptive encoding
 pixels_adaptive_encoding = {}
 for layer in pixels:
@@ -85,6 +85,14 @@ for layer in pixels:
     print("{layer} switching activity (adaptive encoding, 500): \t {sa}".format( layer=layer, sa=get_sa_stream_avg(pixels_adaptive_encoding[layer]) ) )
 
 '''
+
+pixels_differential_encoding_pure = {}
+for layer in pixels:
+    pixels_differential_encoding_pure[layer] = differential_encoding_pure_stream( pixels[layer] )
+    sa_avg = get_sa_stream_avg(pixels_differential_encoding_pure[layer])
+    print("{layer} switching activity (differential encoding pure): \t {sa}, reduction = {reduction}".format( 
+        layer=layer, sa=sa_avg, reduction = (sa_avg/base_sa[layer])*100 ) )
+
 # differential encoding
 print("DIFFERENTIAL ENCODING")
 pixels_differential_encoding = {}
@@ -104,6 +112,9 @@ for layer in pixels:
     sa_avg = get_sa_stream_avg(pixels_differential_encoding[layer])
     print("{layer} switching activity (differential encoding): \t {sa}, reduction = {reduction}".format( 
         layer=layer, sa=sa_avg, reduction = (sa_avg/base_sa[layer])*100 ) )
+    #perform decoding
+    #decoded = differential_encoding_stream_2_decode( pixels_differential_encoding[layer] , offset[layer])
+    #print(np.linalg.norm(np.subtract(decoded,pixels[layer])))
 
 print("DIFFERENTIAL ENCODING")
 pixels_differential_encoding_2 = {}
