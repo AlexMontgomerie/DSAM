@@ -1,13 +1,18 @@
 from encoding import *
 import random
 
-random.seed(127232)
+#random.seed(127232)
 
-TEST_SIZE=50
+TEST_SIZE=10
 
 model_path     = 'model/alexnet.prototxt'
+#model_path     = 'model/vgg16.prototxt'
+#model_path     = 'model/lenet.prototxt'
 data_path_root = 'data/imagenet'
+#data_path_root = 'data/mnist'
 weights_path   = 'weight/alexnet.caffemodel'
+#weights_path   = 'weight/vgg16.caffemodel'
+#weights_path   = 'weight/lenet.caffemodel'
 
 # Initialise Network
 net = caffe.Classifier(model_path,weights_path)
@@ -25,7 +30,6 @@ random_data_files = [ random.choice(data_files) for x in range(TEST_SIZE) ]
 # save values for each layer
 pixels = {}
 
-'''
 # run network
 print("RUNNING NETWORK")
 for f in random_data_files:
@@ -39,15 +43,14 @@ for f in random_data_files:
                 pixels[layer] = np.concatenate( [ pixels[layer], layer_to_stream(net.blobs[layer].data[...] ) ] )
             else:
                 pixels[layer] = layer_to_stream(net.blobs[layer].data[...])
-'''
 
 #np.save('data/pixels_{}.npy'.format(TEST_SIZE),pixels)
 
 
-pixels = np.load('data/pixels_{}.npy'.format(TEST_SIZE))
+#pixels = np.load('data/pixels_{}.npy'.format(TEST_SIZE))
 
-print(pixels.item())
-pixels = pixels.item()
+#print(pixels.item())
+#pixels = pixels.item()
 
 base_sa = {}
 
@@ -67,7 +70,6 @@ for layer in pixels:
 
 '''
 
-'''
 # adaptive encoding (static)
 print("ADAPTIVE ENCODING STATIC")
 pixels_adaptive_encoding_static = {}
@@ -77,6 +79,7 @@ for layer in pixels:
     print("{layer} switching activity (adaptive encoding, static): \t {sa} \t (size={size}), reduction = {reduction}".format( 
         layer=layer, sa=sa_avg, size=len(code_table), reduction= (sa_avg/base_sa[layer])*100 ) )
 
+'''
 # adaptive encoding
 pixels_adaptive_encoding = {}
 for layer in pixels:
@@ -85,13 +88,39 @@ for layer in pixels:
     print("{layer} switching activity (adaptive encoding, 500): \t {sa}".format( layer=layer, sa=get_sa_stream_avg(pixels_adaptive_encoding[layer]) ) )
 
 '''
+'''
+DEPTH_MAX = 500 
+encoded = {}
+reduction = {}
+for layer in pixels:
+    print(layer)
+    encoded[layer] = []
+    reduction[layer] = []
+    for i in range(1,DEPTH_MAX):
+        encoded[layer].append(differential_encoding_stream_2( pixels[layer] , i))
+        sa_avg = get_sa_stream_avg(encoded[layer][i-1])
+        reduction[layer].append( (sa_avg/base_sa[layer])*100 )
 
+i = 1
+for layer in reduction:
+    plt.subplot(len(reduction),1,i)
+    if i == 1:
+        plt.title("Encoded Alexnet Switching Activity Ratio against Offset")
+    plt.plot(np.arange(1,DEPTH_MAX),reduction[layer])
+    plt.ylabel(layer)
+    i+=1
+plt.xlabel('offset, k')
+plt.show()
+'''
+
+'''
 pixels_differential_encoding_pure = {}
 for layer in pixels:
     pixels_differential_encoding_pure[layer] = differential_encoding_pure_stream( pixels[layer] )
     sa_avg = get_sa_stream_avg(pixels_differential_encoding_pure[layer])
     print("{layer} switching activity (differential encoding pure): \t {sa}, reduction = {reduction}".format( 
         layer=layer, sa=sa_avg, reduction = (sa_avg/base_sa[layer])*100 ) )
+'''
 
 # differential encoding
 print("DIFFERENTIAL ENCODING")
@@ -107,6 +136,17 @@ offset = {
   "conv5" : 256,
   "pool5" : 256
 }
+offset = {
+  "data"  : 227,
+  "conv1" : 55,
+  "pool1" : 27,
+  "conv2" : 27,
+  "pool2" : 13,
+  "conv3" : 13,
+  "conv4" : 13,
+  "conv5" : 13,
+  "pool5" : 6
+}
 for layer in pixels:
     pixels_differential_encoding[layer] = differential_encoding_stream_2( pixels[layer] , offset[layer])
     sa_avg = get_sa_stream_avg(pixels_differential_encoding[layer])
@@ -119,15 +159,15 @@ for layer in pixels:
 print("DIFFERENTIAL ENCODING")
 pixels_differential_encoding_2 = {}
 offset = {
-  "data"  : 1,
-  "conv1" : 1,
-  "pool1" : 1,
-  "conv2" : 1,
-  "pool2" : 1,
-  "conv3" : 1,
-  "conv4" : 1,
-  "conv5" : 1,
-  "pool5" : 1
+  "data"  : 227,
+  "conv1" : 55,
+  "pool1" : 27,
+  "conv2" : 27,
+  "pool2" : 13,
+  "conv3" : 13,
+  "conv4" : 13,
+  "conv5" : 13,
+  "pool5" : 6
 }
 for layer in pixels_differential_encoding:
     pixels_differential_encoding_2[layer] = differential_encoding_stream( pixels_differential_encoding[layer] , offset[layer])

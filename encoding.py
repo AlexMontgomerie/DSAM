@@ -118,9 +118,9 @@ def differential_encoding_stream_2(stream, distance=1):
     encoded = stream[:distance].tolist()
     #encoded = stream[:distance]
     for i in range(distance,len(stream)):
-        encoded.append(stream[i] - stream[i-distance])
-        #encoded.append(abs(stream[i] - stream[i-distance]))
-    #encoded = np.bitwise_and( encoded, 0xFFFF )
+        #encoded.append(stream[i] - stream[i-distance])
+        encoded.append(abs(stream[i] - stream[i-distance]))
+    encoded = np.bitwise_and( encoded, 0xFFFF )
     encoded_out = [encoded[0]]
     for i in range(1,len(encoded)):
         encoded_out.append(encoded[i]^encoded_out[i-1])

@@ -14,13 +14,15 @@ from encoding import *
 import scipy.stats
 import matplotlib.pyplot as plt
 
-TEST_SIZE=10
+TEST_SIZE=1
 
 # model parameters
+#model_path     = 'model/vgg16.prototxt'
 # model_path     = 'model/lenet.prototxt'
 model_path     = 'model/alexnet.prototxt'
 # data_path_root = 'data/mnist'
 data_path_root = 'data/imagenet'
+#weights_path   = 'weight/vgg16.caffemodel'
 # weights_path   = 'weight/lenet.caffemodel'
 weights_path   = 'weight/alexnet.caffemodel'
 
@@ -48,11 +50,19 @@ for f in random_data_files:
     for layer in net.blobs:
         layer_type = re.match("[a-z]+",str(layer))
         layer_type = layer_type.group(0)
+        print(layer_type)
         if layer_type=='conv' or layer_type=='pool' or layer_type=='data':
             if layer in pixels:
                 pixels[layer] = np.concatenate( [ pixels[layer], layer_to_stream(net.blobs[layer].data[...]) ] )
             else:
                 pixels[layer] = layer_to_stream(net.blobs[layer].data[...])
+
+print("Getting Average Switching Activity...")
+base_sa = {}
+for layer in pixels:
+    base_sa[layer] = get_sa_stream_avg(pixels[layer])
+    print("{layer} switching activity: \t {sa}".format(layer=layer, sa=base_sa[layer]) )
+
 
 '''
 plt.hist(
@@ -66,13 +76,10 @@ def autocorr(x, t=1):
 
 CORR_SIZE=600
 
-def bitwise(stream,size=16,shift=0):
-    mask = (2**size) - 1
-    stream_out = []
-    for val in stream:
-        #stream_out.append( ( ( val & ( mask << shift ) ) >> shift ) & ((2**FIXED_WIDTH)-1) )
-        stream_out.append( ( ( val & ( mask << shift ) ) ) & ((2**FIXED_WIDTH)-1) )
-    return stream_out
+def bitwise(stream,shift=0):
+    stream_out = np.bitwise_and(stream,(1<<shift))
+    return 2*(stream_out/(2**shift))-1
+
 '''
 print("Gathering Statistics... (correlation) ")
 for layer in pixels:
@@ -86,7 +93,7 @@ for layer in pixels:
     acorr = [ autocorr(tmp, i)[0][1] for i in range(1,CORR_SIZE) ]
     print("Max Auto-Correlation ({layer}) \t = {max}, \t index = {index}".format(layer=layer,max=max(acorr),index=acorr.index(max(acorr))+1 ))
     #plt.show()
-'''
+
 print("Gathering Statistics... (correlation) ")
 for layer in pixels:
     tmp = pixels[layer]
@@ -97,7 +104,7 @@ for layer in pixels:
     
     print("Min Dist ({layer}) \t = {min}, \t index = {index}".format(layer=layer,min=min(dist),index=dist.index(min(dist))+1 ))
     #plt.show()
-
+'''
 
 '''
 # encode pixels
@@ -130,8 +137,6 @@ for layer in pixels_encoded:
     #plt.show()
 '''
 
-
-
 '''
 print("\n\n")
 for layer in pixels:
@@ -141,17 +146,15 @@ for layer in pixels:
 
 '''
 
-'''
 print("Running Bitwise Correlation ... ")
 for layer in pixels:
     corr_total = []
     for i in range(FIXED_WIDTH):
-        tmp = bitwise(pixels[layer], 1, i)
+        tmp = bitwise(pixels[layer], i)
         idx = [i for i in range(1,CORR_SIZE)]
         acorr = [ autocorr(tmp, i)[0][1] for i in range(1,CORR_SIZE) ]
         corr_total.append( ( max(acorr) , acorr.index(max(acorr))+1 ) )
     print('{layer} = '.format(layer=layer), corr_total)
-'''
 
 '''
 for layer in pixels:
