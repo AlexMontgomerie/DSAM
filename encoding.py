@@ -29,6 +29,15 @@ def gray_encoding_stream(stream):
         gray.append(bin2int(bin2gray(int2bin(val))))
     return gray
 
+def bus_invert_stream(stream):
+    encoded = [stream[0]]
+    for i in range(1,len(stream)):
+        if hamming_distance(stream[i],encoded[i-1]) > 8:
+            encoded.append(np.invert(stream[i]))
+        else:
+            encoded.append(stream[i])
+    return encoded
+
 def correlator(prev, diff):
     return prev ^ diff
 
@@ -86,18 +95,11 @@ def adaptive_encoding_stream(stream, block_size):
             prev = val
             encoded[i] = val
 
-    # iterate over blocks
-    #num_cores = multiprocessing.cpu_count()
-    #p = Pool(num_cores)
-    #p.map(encode, [ i for i in range(num_blocks) ])
-    #Parallel(n_jobs=num_cores)(delayed(encode)(i) for i in range(num_blocks))
-
     return encoded, code_table
 
 # V1
 
 def differential_encoding_stream(stream, distance=1):
-    encoded = []
     encoded = np.bitwise_xor( stream[distance:len(stream)], stream[0:(len(stream)-distance)] )
     encoded = np.concatenate( (stream[0:distance], encoded) )
     return encoded
@@ -109,29 +111,19 @@ def differential_encoding_stream_decode(stream, distance=1):
         decoded.append(stream[i])
     # encode the rest
     for i in range(distance,len(stream)):
-        #decoded.append((stream[i]+decoded[i-distance]))
         decoded.append((stream[i]^decoded[i-distance]))
     return decoded
 
 # V2
 def differential_encoding_stream_2(stream, distance=1):
-    encoded = stream[:distance].tolist()
-    #encoded = stream[:distance]
-    for i in range(distance,len(stream)):
-        #encoded.append(stream[i] - stream[i-distance])
-        encoded.append(abs(stream[i] - stream[i-distance]))
+    encoded = np.subtract( stream[distance:len(stream)], stream[0:(len(stream)-distance)] )
+    encoded = np.concatenate( (stream[0:distance], encoded) )
+    encoded = np.absolute(encoded)
     encoded = np.bitwise_and( encoded, 0xFFFF )
     encoded_out = [encoded[0]]
     for i in range(1,len(encoded)):
         encoded_out.append(encoded[i]^encoded_out[i-1])
-    #return encoded
-    return np.array(encoded_out)
-
-#def differential_encoding_stream_2(stream, distance=1):
-#    encoded = np.subtract( stream[distance:len(stream)], stream[0:(len(stream)-distance)] )
-#    encoded = np.bitwise_xor( stream[1:len(stream)], stream[0:(len(stream)-1)] )
-#    encoded = np.concatenate( (stream[0:distance], encoded) )
-#    return encoded
+    return encoded
 
 def differential_encoding_stream_2_decode(stream, distance=1):
     decoded = [stream[0]]
@@ -141,9 +133,6 @@ def differential_encoding_stream_2_decode(stream, distance=1):
     decoded_out = decoded[:distance]
     for i in range(distance,len(stream)):
         decoded_out.append(decoded[i] + decoded_out[i-distance])
-    #tmp = np.add(decoded[distance:len(decoded)], decoded[0:(len(decoded)-distance)])
-    #decoded = np.concatenate( (decoded[0:distance], tmp) )
-
     return decoded_out
 
 def differential_encoding_pure_stream(stream):

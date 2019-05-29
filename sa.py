@@ -25,9 +25,8 @@ def layer_to_stream(layer,quantiser=fixed16):
             for channel in range(layer.shape[1]):
                 #stream.append(quantiser(layer[0][channel][row][col]))
                 stream.append(layer[0][channel][row][col])
-    stream = np.array(stream)
     '''
-    stream = layer.reshape(-1)
+    stream = np.ravel(layer,order='F')
     vf = np.vectorize(quantiser)
     return vf(stream)
 
@@ -54,8 +53,11 @@ def get_sa_stream(stream):
 
 def get_sa_stream_avg(stream):
     sa_stream = get_sa_stream(stream)
-    #return (sum(sa_stream)/float(len(sa_stream)+1))
     return np.mean(sa_stream)
+
+def get_sa_stream_var(stream):
+    sa_stream = get_sa_stream(stream)
+    return np.var(sa_stream)
 
 def num_ones_in_word(word):
     val = 0
