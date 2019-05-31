@@ -3,16 +3,16 @@ import random
 
 #random.seed(127232)
 
-TEST_SIZE=1
+TEST_SIZE=10
 
-model_path     = 'model/alexnet.prototxt'
+#model_path     = 'model/alexnet.prototxt'
 #model_path     = 'model/vgg16.prototxt'
-#model_path     = 'model/lenet.prototxt'
-data_path_root = 'data/imagenet'
-#data_path_root = 'data/mnist'
-weights_path   = 'weight/alexnet.caffemodel'
+model_path     = 'model/lenet.prototxt'
+#data_path_root = 'data/imagenet'
+data_path_root = 'data/mnist'
+#weights_path   = 'weight/alexnet.caffemodel'
 #weights_path   = 'weight/vgg16.caffemodel'
-#weights_path   = 'weight/lenet.caffemodel'
+weights_path   = 'weight/lenet.caffemodel'
 
 # Initialise Network
 net = caffe.Classifier(model_path,weights_path)
@@ -62,6 +62,15 @@ for layer in pixels:
     print("{layer} switching activity (gray encoding): \t {sa}".format( layer=layer, sa=get_sa_stream_avg(pixels_gray_encoding[layer]) ) )
 
 '''
+# adaptive encoding (static)
+print("BUS INVERT")
+bus_invert_encoded = {}
+for layer in pixels:
+    bus_invert_encoded[layer] = bus_invert_stream( pixels[layer] )
+    sa_avg = get_sa_stream_avg(bus_invert_encoded[layer])
+    print("{layer} switching activity (bus invert): \t {sa}, reduction = {reduction}".format(
+        layer=layer, sa=sa_avg, reduction= (sa_avg/base_sa[layer])*100 ) )
+
 
 # adaptive encoding (static)
 print("ADAPTIVE ENCODING STATIC")
@@ -81,7 +90,7 @@ for layer in pixels:
     print("{layer} switching activity (adaptive encoding, 500): \t {sa}".format( layer=layer, sa=get_sa_stream_avg(pixels_adaptive_encoding[layer]) ) )
 
 '''
-
+'''
 DEPTH_MAX = 50
 encoded = {}
 reduction = {}
@@ -105,7 +114,7 @@ for layer in reduction:
     i+=1
 plt.xlabel('offset, k')
 plt.show()
-
+'''
 '''
 pixels_differential_encoding_pure = {}
 for layer in pixels:
@@ -129,19 +138,27 @@ offset = {
   "conv5" : 256,
   "pool5" : 256
 }
-'''
-offset = {
-  "data"  : 227,
-  "conv1" : 55,
-  "pool1" : 27,
-  "conv2" : 27,
-  "pool2" : 13,
-  "conv3" : 13,
-  "conv4" : 13,
-  "conv5" : 13,
-  "pool5" : 6
+
+offsetl = {
+  "data"  : 227*3,
+  "conv1" : 55*96,
+  "pool1" : 27*96,
+  "conv2" : 27*256,
+  "pool2" : 13*256,
+  "conv3" : 13*384,
+  "conv4" : 13*384,
+  "conv5" : 13*256,
+  "pool5" : 6*256
 }
-'''
+
+offset = {
+  "data"  : 1,
+  "conv1" : 20,
+  "pool1" : 20,
+  "conv2" : 50,
+  "pool2" : 50
+}
+
 for layer in pixels:
     pixels_differential_encoding[layer] = differential_encoding_stream_2( pixels[layer] , offset[layer])
     sa_avg = get_sa_stream_avg(pixels_differential_encoding[layer])
@@ -152,23 +169,13 @@ for layer in pixels:
     #print(np.linalg.norm(np.subtract(decoded,pixels[layer])))
 
 print("DIFFERENTIAL ENCODING")
-pixels_differential_encoding_2 = {}
-offset = {
-  "data"  : 227,
-  "conv1" : 55,
-  "pool1" : 27,
-  "conv2" : 27,
-  "pool2" : 13,
-  "conv3" : 13,
-  "conv4" : 13,
-  "conv5" : 13,
-  "pool5" : 6
-}
-for layer in pixels_differential_encoding:
-    pixels_differential_encoding_2[layer] = differential_encoding_stream( pixels_differential_encoding[layer] , offset[layer])
-    #print(pixels_gray_encoding[layer])
-    print("{layer} switching activity (differential encoding): \t {sa}".format( layer=layer, sa=get_sa_stream_avg(pixels_differential_encoding_2[layer]) ) )
-
+pixels_differential_encoding_old = {}
+for layer in pixels:
+    pixels_differential_encoding_old[layer] = differential_encoding_stream( pixels[layer] , offset[layer])
+    sa_avg = get_sa_stream_avg(pixels_differential_encoding_old[layer])
+    print("{layer} switching activity (differential encoding old): \t {sa}, reduction = {reduction}".format(
+        layer=layer, sa=sa_avg, reduction = (sa_avg/base_sa[layer])*100 ) )
+    #perform decoding
 
 ######################################################################
 

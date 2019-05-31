@@ -14,17 +14,17 @@ from encoding import *
 import scipy.stats
 import matplotlib.pyplot as plt
 
-TEST_SIZE=10
+TEST_SIZE=50
 
 # model parameters
-#model_path     = 'model/vgg16.prototxt'
-model_path     = 'model/lenet.prototxt'
 #model_path     = 'model/alexnet.prototxt'
-data_path_root = 'data/mnist'
-#data_path_root = 'data/imagenet'
-#weights_path   = 'weight/vgg16.caffemodel'
-weights_path   = 'weight/lenet.caffemodel'
+model_path     = 'model/vgg16.prototxt'
+#model_path     = 'model/lenet.prototxt'
+data_path_root = 'data/imagenet'
+#data_path_root = 'data/mnist'
 #weights_path   = 'weight/alexnet.caffemodel'
+weights_path   = 'weight/vgg16.caffemodel'
+#weights_path   = 'weight/lenet.caffemodel'
 
 # Initialise Network
 net = caffe.Classifier(model_path,weights_path)
@@ -45,16 +45,17 @@ pixels = {}
 # run network
 print("Running Network... ")
 for f in random_data_files:
-    run_net(net,f)
+    #run_net(net,f)
     # store data
     for layer in net.blobs:
         layer_type = re.match("[a-z]+",str(layer))
         layer_type = layer_type.group(0)
         if layer_type=='conv' or layer_type=='pool' or layer_type=='data':
             if layer in pixels:
-                pixels[layer] = np.concatenate( [ pixels[layer], layer_to_stream(net.blobs[layer].data[...]) ] )
-            else:
-                pixels[layer] = layer_to_stream(net.blobs[layer].data[...])
+                print("{}: {}".format(layer,net.blobs[layer].data.shape))
+                #pixels[layer] = np.concatenate( [ pixels[layer], layer_to_stream(net.blobs[layer].data[...]) ] )
+            #else:
+                #pixels[layer] = layer_to_stream(net.blobs[layer].data[...])
 
 print("Getting Average Switching Activity...")
 base_sa     = {}
@@ -79,7 +80,7 @@ CORR_SIZE=200
 def bitwise(stream,shift=0):
     stream_out = np.bitwise_and(stream,(1<<shift))
     return 2*(stream_out/(2**shift))-1
-
+'''
 print("Gathering Statistics... (correlation) ")
 correlation = {}
 for layer in pixels:
@@ -97,7 +98,7 @@ for layer in correlation:
     i+=1
 plt.xlabel('offset, k')
 plt.show()
-
+'''
 print("Gathering Statistics... (distance) ")
 dist = {}
 for layer in pixels:
