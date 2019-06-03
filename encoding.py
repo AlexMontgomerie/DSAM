@@ -123,7 +123,7 @@ def differential_encoding_stream_2(stream, distance=1):
     encoded_out = [encoded[0]]
     for i in range(1,len(encoded)):
         encoded_out.append(encoded[i]^encoded_out[i-1])
-    return encoded
+    return encoded_out
 
 def differential_encoding_stream_2_decode(stream, distance=1):
     decoded = [stream[0]]

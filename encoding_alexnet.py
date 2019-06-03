@@ -5,14 +5,14 @@ import random
 
 TEST_SIZE=10
 
-#model_path     = 'model/alexnet.prototxt'
-#model_path     = 'model/vgg16.prototxt'
-model_path     = 'model/lenet.prototxt'
-#data_path_root = 'data/imagenet'
-data_path_root = 'data/mnist'
-#weights_path   = 'weight/alexnet.caffemodel'
-#weights_path   = 'weight/vgg16.caffemodel'
-weights_path   = 'weight/lenet.caffemodel'
+model_path     = 'model/alexnet.prototxt'
+model_path     = 'model/vgg16.prototxt'
+#model_path     = 'model/lenet.prototxt'
+data_path_root = 'data/imagenet'
+#data_path_root = 'data/mnist'
+weights_path   = 'weight/alexnet.caffemodel'
+weights_path   = 'weight/vgg16.caffemodel'
+#weights_path   = 'weight/lenet.caffemodel'
 
 # Initialise Network
 net = caffe.Classifier(model_path,weights_path)
@@ -39,10 +39,11 @@ for f in random_data_files:
         layer_type = re.match("[a-z]+",str(layer))
         layer_type = layer_type.group(0)
         if layer_type=='conv' or layer_type=='pool' or layer_type=='data':
+            print(net.blobs[layer].data.shape)
             if layer in pixels:
-                pixels[layer] = np.concatenate( [ pixels[layer], layer_to_stream(net.blobs[layer].data[...] ) ] )
+                pixels[layer] = np.concatenate( [ pixels[layer], layer_to_stream(net.blobs[layer].data[0][...] ) ] )
             else:
-                pixels[layer] = layer_to_stream(net.blobs[layer].data[...])
+                pixels[layer] = layer_to_stream(net.blobs[layer].data[0][...])
 
 
 base_sa = {}
@@ -152,6 +153,28 @@ offsetl = {
 }
 
 offset = {
+    "data"    : 3  ,
+    "conv1_1" : 64 ,
+    "conv1_2" : 64 ,
+    "pool1"   : 64 ,
+    "conv2_1" : 128,
+    "conv2_2" : 128,
+    "pool2"   : 128,
+    "conv3_1" : 256,
+    "conv3_2" : 256,
+    "conv3_3" : 256,
+    "pool3"   : 256,
+    "conv4_1" : 512,
+    "conv4_2" : 512,
+    "conv4_3" : 512,
+    "pool4"   : 512,
+    "conv5_1" : 512,
+    "conv5_2" : 512,
+    "conv5_3" : 512,
+    "pool5"   : 512
+}
+
+offset4 = {
   "data"  : 1,
   "conv1" : 20,
   "pool1" : 20,

@@ -14,16 +14,16 @@ from encoding import *
 import scipy.stats
 import matplotlib.pyplot as plt
 
-TEST_SIZE=50
+TEST_SIZE=10
 
 # model parameters
-#model_path     = 'model/alexnet.prototxt'
-model_path     = 'model/vgg16.prototxt'
+model_path     = 'model/alexnet.prototxt'
+#model_path     = 'model/vgg16.prototxt'
 #model_path     = 'model/lenet.prototxt'
 data_path_root = 'data/imagenet'
 #data_path_root = 'data/mnist'
-#weights_path   = 'weight/alexnet.caffemodel'
-weights_path   = 'weight/vgg16.caffemodel'
+weights_path   = 'weight/alexnet.caffemodel'
+#weights_path   = 'weight/vgg16.caffemodel'
 #weights_path   = 'weight/lenet.caffemodel'
 
 # Initialise Network
@@ -39,23 +39,24 @@ for (dirpath, dirnames, filenames) in os.walk(data_path_root):
 
 random_data_files = [ random.choice(data_files) for x in range(TEST_SIZE) ]
 
+print(random_data_files)
+
 # save values for each layer
 pixels = {}
 
 # run network
 print("Running Network... ")
 for f in random_data_files:
-    #run_net(net,f)
+    run_net(net,f)
     # store data
     for layer in net.blobs:
         layer_type = re.match("[a-z]+",str(layer))
         layer_type = layer_type.group(0)
         if layer_type=='conv' or layer_type=='pool' or layer_type=='data':
             if layer in pixels:
-                print("{}: {}".format(layer,net.blobs[layer].data.shape))
-                #pixels[layer] = np.concatenate( [ pixels[layer], layer_to_stream(net.blobs[layer].data[...]) ] )
-            #else:
-                #pixels[layer] = layer_to_stream(net.blobs[layer].data[...])
+                pixels[layer] = np.concatenate( [ pixels[layer], layer_to_stream(net.blobs[layer].data[0][...]) ] )
+            else:
+                pixels[layer] = layer_to_stream(net.blobs[layer].data[0][...])
 
 print("Getting Average Switching Activity...")
 base_sa     = {}
@@ -75,11 +76,12 @@ plt.show()
 def autocorr(x, t=1):
     return np.corrcoef(np.array([x[:-t], x[t:]]))
 
-CORR_SIZE=200
+CORR_SIZE=1000
 
 def bitwise(stream,shift=0):
     stream_out = np.bitwise_and(stream,(1<<shift))
     return 2*(stream_out/(2**shift))-1
+
 '''
 print("Gathering Statistics... (correlation) ")
 correlation = {}
@@ -98,7 +100,7 @@ for layer in correlation:
     i+=1
 plt.xlabel('offset, k')
 plt.show()
-'''
+
 print("Gathering Statistics... (distance) ")
 dist = {}
 for layer in pixels:
@@ -118,74 +120,38 @@ for layer in dist:
 plt.xlabel('offset, k')
 #plt.xticks([])
 plt.show()
-
-
 '''
-# encode pixels
-pixels_encoded = {}
-offset = {
-  "data"  : 3,
-  "conv1" : 96,
-  "pool1" : 96,
-  "conv2" : 256,
-  "pool2" : 256,
-  "conv3" : 384,
-  "conv4" : 384,
-  "conv5" : 256,
-  "pool5" : 256
-}
+
+def hamming_distance(x1,x2):
+    dist = x1 ^ x2
+    return bin(dist).count('1')
+
+def hamming_distance_stream(x1,x2):
+    xor = np.bitwise_xor(x1,x2)
+    f = lambda x : bin(x).count('1') # hamming distance
+    vf = np.vectorize(f)
+    #return [hamming_distance(stream[i],stream[i-1])/FIXED_WIDTH for i in range(1,len(stream))]
+    return vf(xor)
+
+
+print("Gathering Statistics... (hamming distance) ")
+hamm_dist = {}
 for layer in pixels:
-    pixels_encoded[layer] = differential_encoding_stream( pixels[layer] , offset[layer])
+    tmp = pixels[layer]
+    hamm_dist[layer] = [ np.mean(hamming_distance_stream(tmp[i:],tmp[:-i])) for i in range(1,CORR_SIZE) ]
 
-print("Gathering Statistics... ")
-for layer in pixels_encoded:
-    #plt.acorr( pixels[layer], maxlags=100, label=layer)
-    #plt.stem( [i for i in range(1,CORR_SIZE)], [ autocorr(pixels[layer], i)[0][1] for i in range(1,CORR_SIZE) ], label=layer)
-    # tmp = bitwise(pixels[layer], 8, 8)
-    tmp = pixels_encoded[layer]
-    #tmp = bitwise(pixels[layer])
-    idx = [i for i in range(1,CORR_SIZE)]
-    #acorr = [ autocorr(pixels[layer], i)[0][1] for i in range(1,CORR_SIZE) ]
-    acorr = [ autocorr(tmp, i)[0][1] for i in range(1,CORR_SIZE) ]
-    print("Max Auto-Correlation ({layer}) \t = {max}, \t index = {index}".format(layer=layer,max=max(acorr),index=acorr.index(max(acorr))+1 ))
-    #plt.show()
-'''
+i=1
+for layer in hamm_dist:
+    plt.subplot(len(hamm_dist),1,i)
+    if i == 1:
+        plt.title("Hamming Distance against Offset")
+    plt.plot(np.arange(1,CORR_SIZE),hamm_dist[layer])
+    plt.ylabel(layer)
+    if i != len(hamm_dist):
+        plt.xticks([])
+    i+=1
+plt.xlabel('Offset, k')
+#plt.xticks([])
+plt.show()
 
-'''
-print("\n\n")
-for layer in pixels:
-    acorr = [ autocorr(pixels[layer], i)[0][1] for i in range(1,CORR_SIZE) ]
-    print("Max Auto-Correlation ({layer}) \t = {max}, \t index = {index}".format(layer=layer,max=max(acorr),index=acorr.index(max(acorr))+1 ))
-    #plt.show()
 
-'''
-'''
-print("Running Bitwise Correlation ... ")
-for layer in pixels:
-    corr_total = []
-    for i in range(FIXED_WIDTH):
-        tmp = bitwise(pixels[layer], i)
-        idx = [i for i in range(1,CORR_SIZE)]
-        acorr = [ autocorr(tmp, i)[0][1] for i in range(1,CORR_SIZE) ]
-        corr_total.append( ( max(acorr) , acorr.index(max(acorr))+1 ) )
-    print('{layer} = '.format(layer=layer), corr_total)
-'''
-'''
-for layer in pixels:
-    corr_total = [0 for i in range(CORR_SIZE-1)]
-    for index in range(len(pixels[layer])-2*CORR_SIZE):
-        acorr = [ autocorr(pixels[layer][index:index+2*CORR_SIZE], i)[0][1] for i in range(1,CORR_SIZE) ]
-        for i in range(CORR_SIZE-1):
-          corr_total[i] += acorr[i]
-    for i in range(CORR_SIZE-1):
-        corr_total[i] /= (len(pixels[layer])-2*CORR_SIZE)
-    print('{layer} = '.format(layer=layer), corr_total)
-'''
-
-'''
-n_bits = [16, 8, 4, 2, 1]
-for n_bit in n_bits:
-    n_blocks = int(FIXED_WIDTH/n_bits)
-
-    for block_index in n_blocks
-'''
