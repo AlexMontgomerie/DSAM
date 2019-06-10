@@ -18,12 +18,12 @@ TEST_SIZE=10
 
 # model parameters
 model_path     = 'model/alexnet.prototxt'
-#model_path     = 'model/vgg16.prototxt'
+model_path     = 'model/vgg16.prototxt'
 #model_path     = 'model/lenet.prototxt'
 data_path_root = 'data/imagenet'
 #data_path_root = 'data/mnist'
 weights_path   = 'weight/alexnet.caffemodel'
-#weights_path   = 'weight/vgg16.caffemodel'
+weights_path   = 'weight/vgg16.caffemodel'
 #weights_path   = 'weight/lenet.caffemodel'
 
 # Initialise Network
