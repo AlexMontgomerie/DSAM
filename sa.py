@@ -18,14 +18,6 @@ def fixed16(val):
 
 # LAYER FUNCTIONS
 def layer_to_stream(layer,quantiser=fixed16):
-    '''
-    stream = []
-    for row in range(layer.shape[3]):
-        for col in range(layer.shape[2]):
-            for channel in range(layer.shape[1]):
-                #stream.append(quantiser(layer[0][channel][row][col]))
-                stream.append(layer[0][channel][row][col])
-    '''
     stream = np.ravel(layer,order='F')
     vf = np.vectorize(quantiser)
     return vf(stream)
@@ -44,9 +36,15 @@ def hamming_distance(x1,x2):
     dist = x1 ^ x2
     return bin(dist).count('1')
 
+def hamming_distance_stream(x1,x2):
+    xor = np.bitwise_xor(x1,x2)
+    f = lambda x : bin(x).count('1') # hamming distance
+    vf = np.vectorize(f)
+    return vf(xor)
+
 def get_sa_stream(stream):
-    xor = np.bitwise_xor(stream[1:],stream[:-1])
-    f = lambda x : bin(x).count('1')/FIXED_WIDTH # hamming distance
+    xor = np.bitwise_xor(stream[1:],stream[:-1]) # hamming distance (1)
+    f = lambda x : bin(x).count('1')/FIXED_WIDTH # hamming distance (2)
     vf = np.vectorize(f)
     #return [hamming_distance(stream[i],stream[i-1])/FIXED_WIDTH for i in range(1,len(stream))]
     return vf(xor)
@@ -64,14 +62,6 @@ def num_ones_in_word(word):
     for i in range(8):
         val += (word >> i) & 1
     return val
-
-# Get Bit of Fixed Point
-def get_bit(val,bit):
-    return (val >> bit) & 1
-
-# Fixed Point
-def ap_fixed(val,width,int_size):
-    return (int(val*(2<<(width-int_size))))&((2<<width)-1)
 
 # Run network
 def run_net(net,filepath,scale=256):
@@ -94,54 +84,3 @@ def run_net(net,filepath,scale=256):
     net.forward()
     # return network
     return net
-
-# Run analysis of layer of the network
-def analyse_layer(layer):
-    return get_sa_stream_avg(layer_to_stream(layer))
-
-
-#Run analysis across the whole network
-def analyse_net(net):
-    layer_sa = []
-    for layer in net.blobs:
-        layer_type = re.match("[a-z]+",str(layer))
-        layer_type = layer_type.group(0)
-        if layer_type=='conv' or layer_type=='pool' or layer_type=='data':
-            layer_sa.append( analyse_layer(net.blobs[layer].data[...]) )
-    return layer_sa
-
-def main(argv):
-
-    model_path    = ''
-    data_path     = ''
-    weights_path  = ''
-
-    try:
-        opts,args = getopt.getopt(argv,"hm:d:w:")
-    except getopt.GetoptError:
-        print('sa.py -m <model path> -d <data path> -w <weights path> ')
-        sys.exit(2)
-    for opt,arg in opts:
-        if opt == '-h':
-            print('sa.py -m <model path> -d <data path> -w <weights path>')
-            sys.exit()
-        elif opt in ('-m'):
-            model_path = arg
-        elif opt in ('-d'):
-            data_path  = arg
-        elif opt in ('-w'):
-            weights_path = arg
-
-    # Initialise Network
-    net = caffe.Classifier(model_path,weights_path)
-
-    # Run for given data
-    run_net(net,data_path)
-
-    # Analyse Network
-    analyse_net(net)
-
-if __name__=="__main__":
-    #print(hamming_distance(3,0))
-    plot_image('data/alexnet.jpg')
-    main(sys.argv[1:])
