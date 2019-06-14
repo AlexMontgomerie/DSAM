@@ -1,9 +1,9 @@
 from encoding import *
 import random
 
-TEST_SIZE=10
+TEST_SIZE=100
 
-net_name = 'alexnet'
+net_name = 'lenet'
 
 if net_name == 'lenet':
     model_path     = 'model/lenet.prototxt'
@@ -56,7 +56,7 @@ base_sa = {}
 print("BASELINE SA")
 for layer in pixels:
     base_sa[layer] = get_sa_stream_avg(pixels[layer])
-    print("{layer} switching activity: \t {sa}".format(layer=layer, sa=base_sa[layer]) )
+    print("{layer} switching activity: \t {sa}".format(layer=layer, sa=round(base_sa[layer],4)) )
 
 
 # bus-invert encoding
@@ -66,7 +66,7 @@ for layer in pixels:
     bus_invert_encoded[layer] = bus_invert_stream( pixels[layer] )
     sa_avg = get_sa_stream_avg(bus_invert_encoded[layer])
     print("{layer} switching activity (bus invert): \t {sa}, reduction = {reduction}".format(
-        layer=layer, sa=sa_avg, reduction= (sa_avg/base_sa[layer])*100 ) )
+        layer=layer, sa=round(sa_avg,4), reduction= round((base_sa[layer]-sa_avg)/base_sa[layer],4)*100 ) )
 
 
 # adaptive encoding (static)
@@ -76,7 +76,7 @@ for layer in pixels:
     pixels_adaptive_encoding_static[layer], code_table = adaptive_encoding_static_stream( pixels[layer] )
     sa_avg = get_sa_stream_avg(pixels_adaptive_encoding_static[layer])
     print("{layer} switching activity (adaptive encoding, static): \t {sa} \t (size={size}), reduction = {reduction}".format(
-        layer=layer, sa=sa_avg, size=len(code_table), reduction= (sa_avg/base_sa[layer])*100 ) )
+        layer=layer, sa=round(sa_avg,4), size=len(code_table), reduction= round((base_sa[layer]-sa_avg)/base_sa[layer],4)*100 ) )
 
 
 # load offset
@@ -97,13 +97,13 @@ for layer in pixels:
     csam_encoding[layer] = csam_encoding_stream( pixels[layer] , offset[layer])
     sa_avg = get_sa_stream_avg(csam_encoding[layer])
     print("{layer} switching activity (csam): \t {sa}, reduction = {reduction}".format(
-        layer=layer, sa=sa_avg, reduction = (sa_avg/base_sa[layer])*100 ) )
+        layer=layer, sa=round(sa_avg,4), reduction= round((base_sa[layer]-sa_avg)/base_sa[layer],4)*100 ) )
 
 print("DSAM ENCODING")
 dsam_encoding = {}
 for layer in pixels:
-    dsam_encoding[layer], _ = dsam_encoding_stream( pixels[layer] , offset[layer])
-    sa_avg = get_sa_stream_avg(dsam_encoding[layer])
+    dsam_encoding[layer], sign = dsam_encoding_stream( pixels[layer] , offset[layer])
+    sa_avg = get_sa_stream_avg(dsam_encoding[layer]) + get_sa_stream_avg(sign)
     print("{layer} switching activity (dsam): \t {sa}, reduction = {reduction}".format(
-        layer=layer, sa=sa_avg, reduction = (sa_avg/base_sa[layer])*100 ) )
+        layer=layer, sa=round(sa_avg,4), reduction= round((base_sa[layer]-sa_avg)/base_sa[layer],4)*100 ) )
     #perform decoding
