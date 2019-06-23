@@ -1,2 +1,2 @@
-# saCNN
-Scripts to obtain bit-level switching activity of CNNs. Requires Caffe.
+# DSAM
+A coding scheme for reducing switching activity in convolutional neural networks. 
