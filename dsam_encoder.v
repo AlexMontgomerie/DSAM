@@ -1,3 +1,4 @@
+`timescale 1ns / 1ns
 module dsam_encoder #(
   parameter DATA_WIDTH = 16,
   CHANNELS = 256
@@ -7,9 +8,10 @@ module dsam_encoder #(
   output [DATA_WIDTH-1:0] out
 );
 
+  reg [7:0 ]cntr = 0;
   
   reg [DATA_WIDTH-2:0] corr = 0;
-  reg sign_buf;  
+  reg sign_buf = 0;  
 
   reg [DATA_WIDTH-1:0] buffer_in;
   wire [DATA_WIDTH-1:0] buffer_out;
@@ -17,18 +19,18 @@ module dsam_encoder #(
 
   // fifo signals
   wire empty, full;
-  reg read, write;
+  reg read  = 0;
+  reg write = 0;
 
   initial begin
-    write <= 1;
-    read  <= 0;
-    sub   <= 0;
+    //sub   <= 0;
     sign_buf <= 1;
     corr  <= 16'h0000;
+    write <= 1;
   end
 
   fifo #(
-    .ADDRESS_WIDTH(CHANNELS),
+    .ADDRESS_WIDTH(3),
     .DATA_WIDTH(DATA_WIDTH)
   ) buffer (
     .clk          (clk),
@@ -41,33 +43,28 @@ module dsam_encoder #(
     .read_data    (buffer_out)  
   );  
 
-  // initialise
-  //write = 1;
-
   // sync logic
   always @ (posedge clk)
   begin
     // update fifo
     buffer_in <= in;
-    
-    // initial 
-    if (!full) begin
-      sub <= in;
-    end
-    else begin
-      read = 1;
-      
-      sub  = (buffer_out - in);
-    end
     // output
+    sub  <= (cntr == CHANNELS) ? (in - buffer_out) : in;
     corr <= sub[DATA_WIDTH-1] ? 
       ((~sub[DATA_WIDTH-2:0]) ^ corr) : 
       (( sub[DATA_WIDTH-2:0]) ^ corr) ;
     sign_buf <= sub[DATA_WIDTH-1];
-    //out <= {sign_buf, corr};
+    
+    // initial 
+    if (cntr < CHANNELS-1) begin
+      cntr <= cntr + 1;
+    end
+    else if (cntr == CHANNELS-1) begin
+      cntr <= CHANNELS;
+      read = 1;
+    end
   end
 
   assign out = {sign_buf, corr};
-  //assign out = 16'h5;
 
 endmodule

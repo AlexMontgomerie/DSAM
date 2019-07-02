@@ -108,25 +108,5 @@ def dsam_decoding_stream(stream,sign,distance=1):
 
 if __name__ == '__main__':
 
-    tmp = [ 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF,
-            0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF,
-            0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF,
-            0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF ]
-
-    tmp1 = [ 1, 3443, 436, 3, 4436, 543, 9, 4321, 435, 1]
-    #tmp = [ 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]
-    #tmp = [ 1.78978, 0.9990, 0.9999, 1.798, 0.68, 0.679, 1.2345, 0.6757, 0.098676, 1.456 ]
-
-    #encoded = differential_encoding_stream(tmp,3)
-    #encoded2 = differential_encoding_stream_decode(encoded, 3)
-    print(tmp1)
-    encoded, tmp = differential_encoding_stream_2(tmp1,3)
-    encoded2 = differential_encoding_stream_2_decode(encoded, tmp, 3)
-    print("switching activity           : \t {sa}".format(sa=get_sa_stream_avg(tmp)) )
-    print("switching activity (encoded) : \t {sa}".format(sa=get_sa_stream_avg(encoded)) )
-    print("switching activity (encoded) : \t {sa}".format(sa=get_sa_stream_avg(encoded2)) )
-    print(tmp1)
-    print(encoded)
-    print(encoded2)
-    #print(differential_encoding_stream_decode(encoded))
-    #print(differential_encoding_stream_decode(differential_encoding_stream_decode(encoded2)))
+    data_in = [ 1, 2, 3, 4, 5, 6, 7, 8 ]
+    print(dsam_encoding_stream(data_in,4))

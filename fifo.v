@@ -1,5 +1,6 @@
 // FIFO buffer implemented with synchronous dual-port block ram
 // taken from : https://embeddedthoughts.com/2016/07/13/fifo-buffer-using-block-ram-on-a-xilinx-spartan-3-fpga/
+`timescale 1ns / 1ns
 module fifo
 
 	#( parameter ADDRESS_WIDTH = 12, // number of words in ram
@@ -28,7 +29,7 @@ module fifo
 	sync_dual_port_ram #(.ADDRESS_WIDTH(ADDRESS_WIDTH), .DATA_WIDTH(DATA_WIDTH)) ram
                        (.clk(clk), .write_en(write_en), .write_address(write_address_reg),
 			.read_address(read_address_reg), .write_data_in(write_data),
-			.write_data_out(), .read_data_out(read_data));
+			.read_data_out(read_data));
 	
 	// register for address pointers, full/empty status
 	always @(posedge clk, posedge reset)
@@ -50,44 +51,44 @@ module fifo
 	// next-state logic for address index values after read/write operations
 	always @*
 		begin
-		write_address_after = write_address_reg + 1;
-		read_address_after  = read_address_reg + 1;
+		write_address_after <= write_address_reg + 1;
+		read_address_after  <= read_address_reg + 1;
 		end
 		
 	// next-state logic for address pointers
 	always @*
 		begin
 		// defaults
-		write_address_next = write_address_reg;
-		read_address_next  = read_address_reg;
-		full_next          = full_reg;
-		empty_next         = empty_reg;
+		write_address_next <= write_address_reg;
+		read_address_next  <= read_address_reg;
+		full_next          <= full_reg;
+		empty_next         <= empty_reg;
 		
 		// if read input asserted and FIFO isn't empty
 		if(read && ~empty_reg && ~write)
 			begin
-			read_address_next = read_address_after;       // read address moves forward
-			full_next = 1'b0;                             // FIFO isn't full if a read occured
+			read_address_next <= read_address_after;       // read address moves forward
+			full_next         <= 1'b0;                             // FIFO isn't full if a read occured
 			
 			if (read_address_after == write_address_reg)  // if read address caught up with write address,
-				empty_next = 1'b1;                        // FIFO is empty
+				empty_next <= 1'b1;                        // FIFO is empty
 			end
 		
 		// if write input asserted and FIFO isn't full
 		else if(write && ~full_reg && ~read)
 			begin
-			write_address_next = write_address_after;     // write address moves forward
-			empty_next = 1'b0;                            // FIFO isn't empty if write occured
+			write_address_next <= write_address_after;     // write address moves forward
+			empty_next         <= 1'b0;                            // FIFO isn't empty if write occured
 			
 			if (write_address_after == read_address_reg)    // if write address caught up with read address
-				full_next = 1'b1;                         // FIFO is full
+				full_next <= 1'b1;                         // FIFO is full
                         end
 		
 		// if write and read are asserted
                 else if(write && read)
 			begin
-			write_address_next = write_address_after;     // write address moves forward
-			read_address_next  = read_address_after;      // read address moves forward
+			write_address_next <= write_address_after;     // write address moves forward
+			read_address_next  <= read_address_after;      // read address moves forward
                         end
 		end 
 	
