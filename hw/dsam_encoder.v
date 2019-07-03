@@ -1,5 +1,6 @@
 `timescale 1ns / 1ns
 module dsam_encoder #(
+  parameter ADDR_WIDTH = 3,
   parameter DATA_WIDTH = 16,
   CHANNELS = 256
 ) (
@@ -30,7 +31,7 @@ module dsam_encoder #(
   end
 
   fifo #(
-    .ADDRESS_WIDTH(3),
+    .ADDRESS_WIDTH(ADDR_WIDTH),
     .DATA_WIDTH(DATA_WIDTH)
   ) buffer (
     .clk          (clk),

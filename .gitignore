@@ -108,3 +108,11 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# vivado
+*.jou
+*.log
+*.pb
+*.wdb
+*.prj
+*.dir/

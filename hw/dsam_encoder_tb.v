@@ -8,6 +8,7 @@ wire [15:0] data_out;
 
 // DUT
 dsam_encoder #(
+  .ADDR_WIDTH(3),
   .DATA_WIDTH(16),
   .CHANNELS(4)
 ) dut (
