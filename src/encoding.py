@@ -89,7 +89,7 @@ def dsam_encoding_stream(stream, distance=1):
     encoded = np.concatenate( (stream[0:distance], encoded) )
     sign    = np.sign(encoded)
     encoded = np.absolute(encoded)
-    #encoded = np.bitwise_and( encoded, 0xFFFF )
+    encoded = np.bitwise_and( encoded, 0xFFFF )
     encoded_out = [encoded[0]]
     for i in range(1,len(encoded)):
         encoded_out.append(encoded[i]^encoded_out[i-1])

@@ -50,10 +50,13 @@ module dsam_encoder #(
     // update fifo
     buffer_in <= in;
     // output
-    sub  <= (cntr == CHANNELS) ? (in - buffer_out) : in;
-    corr <= sub[DATA_WIDTH-1] ? 
-      ((~sub[DATA_WIDTH-2:0]) ^ corr) : 
-      (( sub[DATA_WIDTH-2:0]) ^ corr) ;
+    sub  <= (cntr == CHANNELS) ? 
+        ( (in>buffer_out) ? in - buffer_out : buffer_out - in ) : in;
+    // corr <= sub[DATA_WIDTH-1] ? 
+    //   ((~sub[DATA_WIDTH-2:0]) ^ corr) : 
+    //   (( sub[DATA_WIDTH-2:0]) ^ corr) ;
+    corr <= sub[DATA_WIDTH-2:0] ^ corr ; 
+    
     sign_buf <= sub[DATA_WIDTH-1];
     
     // initial 
